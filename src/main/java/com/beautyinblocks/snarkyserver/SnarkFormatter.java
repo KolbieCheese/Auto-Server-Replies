@@ -17,7 +17,8 @@ public final class SnarkFormatter {
     public Component format(String template, Map<String, String> values) {
         String formatted = template;
         for (Map.Entry<String, String> entry : values.entrySet()) {
-            formatted = formatted.replace("{" + entry.getKey() + "}", entry.getValue());
+            String safeValue = miniMessage.escapeTags(entry.getValue() == null ? "" : entry.getValue());
+            formatted = formatted.replace("{" + entry.getKey() + "}", safeValue);
         }
         return miniMessage.deserialize(prefix + formatted);
     }
