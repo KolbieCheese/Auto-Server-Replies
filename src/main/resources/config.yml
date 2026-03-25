@@ -1,0 +1,37 @@
+enabled: true
+prefix: "&7[&dSnark&7] "
+
+death-snark:
+  enabled: true
+  chance: 0.35
+
+chat-snark:
+  enabled: true
+  chance: 0.15
+  min-message-length: 6
+  ignore-commands: true
+
+cooldowns:
+  per-player-seconds: 30
+  global-seconds: 5
+
+filters:
+  bypass-permission: "snarkyserver.bypass"
+  ignored-worlds: []
+  ignored-prefixes:
+    - "!"
+    - "?"
+
+messages:
+  death-generic:
+    - "{player} has departed this realm in a very normal way."
+    - "Another flawless strategy from {player}."
+  death-lava:
+    - "{player} discovered that lava is, in fact, hot."
+  death-fall:
+    - "{player} tested gravity again. Results were consistent."
+  death-pvp:
+    - "{player} got outplayed by {killer}."
+  chat-generic:
+    - "{player} said: {message}"
+    - "Thanks for sharing that, {player}: {message}"
