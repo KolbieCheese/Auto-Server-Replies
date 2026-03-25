@@ -1,7 +1,9 @@
 name: SnarkyServer
-version: '1.0.0'
+version: 1.0.0
 main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21'
-authors:
-  - BeautyInBlocks
-description: Snarky server plugin bootstrap.
+author: Beauty in Blocks
+description: Lightweight snarky chat/death responder plugin
+permissions:
+  snarkyserver.bypass:
+    default: op
