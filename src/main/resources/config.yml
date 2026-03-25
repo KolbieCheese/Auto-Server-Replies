@@ -1,5 +1,6 @@
 enabled: true
-prefix: "&7[&dSnark&7] "
+# Prefix now uses MiniMessage tags (legacy &-codes are not parsed).
+prefix: "<gray>[<light_purple>Snark<gray>] <reset>"
 
 death-snark:
   enabled: true
