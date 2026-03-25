@@ -33,7 +33,12 @@ public final class SnarkService {
     }
 
     public Component buildDeathReply(Player player, String causeKey, String killerName) {
-        if (!canRespondForPlayer(player) || !config.deathSnark().enabled() || !passesChance(config.deathSnark().chance())) {
+        if (!canRespondForPlayer(player) || !config.deathSnark().enabled()) {
+            return null;
+        }
+
+        double chance = deathChanceForCause(causeKey);
+        if (!passesChance(chance)) {
             return null;
         }
 
@@ -57,7 +62,7 @@ public final class SnarkService {
         if (!canRespondForPlayer(player)
                 || !config.chatSnark().enabled()
                 || shouldSkipChatMessageLightweight(messageText)
-                || !passesChance(config.chatSnark().chance())) {
+                || !passesChance(config.chatSnark().chances().generic())) {
             return null;
         }
 
@@ -121,6 +126,16 @@ public final class SnarkService {
 
     private boolean passesChance(double chance) {
         return random.nextDouble() <= Math.max(0.0D, Math.min(1.0D, chance));
+    }
+
+    private double deathChanceForCause(String causeKey) {
+        SnarkyConfig.DeathSnark.Chances chances = config.deathSnark().chances();
+        return switch (causeKey) {
+            case LAVA -> chances.lava();
+            case FALL -> chances.fall();
+            case PVP -> chances.pvp();
+            default -> chances.generic();
+        };
     }
 
     private String pickRandom(List<String> messages) {

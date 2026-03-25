@@ -3,11 +3,24 @@ prefix: "&7[&dSnark&7] "
 
 death-snark:
   enabled: true
-  chance: 0.20
+  # Per-category chance to post a death snark message.
+  # Values are 0.0 to 1.0 (for example, 0.20 = 20%).
+  chances:
+    generic: 0.20
+    lava: 0.20
+    fall: 0.20
+    pvp: 0.20
+  # Legacy key kept for backward compatibility with older config files.
+  # chance: 0.20
 
 chat-snark:
   enabled: true
-  chance: 0.05
+  # Per-category chance to post a chat snark message.
+  # Values are 0.0 to 1.0 (for example, 0.05 = 5%).
+  chances:
+    generic: 0.05
+  # Legacy key kept for backward compatibility with older config files.
+  # chance: 0.05
   min-message-length: 6
   ignore-commands: true
 

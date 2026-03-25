@@ -9,16 +9,26 @@ public final class SnarkyConfigLoader {
     }
 
     public static SnarkyConfig load(FileConfiguration configuration) {
+        double legacyDeathChance = configuration.getDouble("death-snark.chance", 0.20);
+        double legacyChatChance = configuration.getDouble("chat-snark.chance", 0.05);
+
         return new SnarkyConfig(
                 configuration.getBoolean("enabled", true),
                 configuration.getString("prefix", ""),
                 new SnarkyConfig.DeathSnark(
                         configuration.getBoolean("death-snark.enabled", true),
-                        configuration.getDouble("death-snark.chance", 0.20)
+                        new SnarkyConfig.DeathSnark.Chances(
+                                getChance(configuration, "death-snark.chances.generic", legacyDeathChance),
+                                getChance(configuration, "death-snark.chances.lava", legacyDeathChance),
+                                getChance(configuration, "death-snark.chances.fall", legacyDeathChance),
+                                getChance(configuration, "death-snark.chances.pvp", legacyDeathChance)
+                        )
                 ),
                 new SnarkyConfig.ChatSnark(
                         configuration.getBoolean("chat-snark.enabled", true),
-                        configuration.getDouble("chat-snark.chance", 0.05),
+                        new SnarkyConfig.ChatSnark.Chances(
+                                getChance(configuration, "chat-snark.chances.generic", legacyChatChance)
+                        ),
                         configuration.getInt("chat-snark.min-message-length", 6),
                         configuration.getBoolean("chat-snark.ignore-commands", true)
                 ),
@@ -39,6 +49,10 @@ public final class SnarkyConfigLoader {
                         listOrFallback(configuration.getStringList("messages.chat-generic"), "{player}: {message}")
                 )
         );
+    }
+
+    private static double getChance(FileConfiguration configuration, String path, double fallback) {
+        return configuration.isSet(path) ? configuration.getDouble(path, fallback) : fallback;
     }
 
     private static List<String> listOrFallback(List<String> values, String fallback) {

@@ -11,10 +11,14 @@ public record SnarkyConfig(
         Filters filters,
         Messages messages
 ) {
-    public record DeathSnark(boolean enabled, double chance) {
+    public record DeathSnark(boolean enabled, Chances chances) {
+        public record Chances(double generic, double lava, double fall, double pvp) {
+        }
     }
 
-    public record ChatSnark(boolean enabled, double chance, int minMessageLength, boolean ignoreCommands) {
+    public record ChatSnark(boolean enabled, Chances chances, int minMessageLength, boolean ignoreCommands) {
+        public record Chances(double generic) {
+        }
     }
 
     public record Cooldowns(int perPlayerSeconds, int globalSeconds) {
