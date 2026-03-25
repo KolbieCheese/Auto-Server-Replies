@@ -33,11 +33,13 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         cooldownManager = new CooldownManager(config.cooldowns());
         SnarkFormatter formatter = new SnarkFormatter(config.prefix());
         DeathCategoryClassifier deathCategoryClassifier = new DeathCategoryClassifier();
+        ChatCategoryClassifier chatCategoryClassifier = new ChatCategoryClassifier();
         SnarkService snarkService = new SnarkService(
                 ThreadLocalRandom.current(),
                 cooldownManager,
                 formatter,
-                config
+                config,
+                chatCategoryClassifier
         );
 
         Bukkit.getPluginManager().registerEvents(
