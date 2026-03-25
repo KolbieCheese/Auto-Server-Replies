@@ -60,8 +60,7 @@ public final class SnarkService {
 
     public Component buildChatReply(Player player, String messageText) {
         if (!canRespondForPlayer(player)
-                || !config.chatSnark().enabled()
-                || shouldSkipChatMessageLightweight(messageText)) {
+                || !config.chatSnark().enabled()) {
             return null;
         }
 
@@ -81,6 +80,10 @@ public final class SnarkService {
 
     public boolean isChatEnabled() {
         return config.enabled() && config.chatSnark().enabled();
+    }
+
+    public boolean shouldHandleChatAsync(String messageText) {
+        return isChatEnabled() && !shouldSkipChatMessageLightweight(messageText);
     }
 
     public boolean shouldSkipChatMessageLightweight(String messageText) {
