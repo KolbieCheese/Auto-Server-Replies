@@ -65,13 +65,13 @@ public final class SnarkyConfigLoader {
                         listOrFallback(configuration, "messages.death-lava", "messages.death-generic", "{player} touched lava and regretted it."),
                         listOrFallback(configuration, "messages.death-fall", "messages.death-generic", "{player} discovered terminal velocity."),
                         listOrFallback(configuration, "messages.death-pvp", "messages.death-generic", "{player} lost a duel to {killer}."),
-                        listOrFallback(configuration, "messages.death-drowning", "messages.death-generic", "{player} forgot how breathing works underwater."),
-                        listOrFallback(configuration, "messages.death-fire", "messages.death-generic", "{player} is having a rough time with open flames."),
-                        listOrFallback(configuration, "messages.death-void", "messages.death-generic", "{player} explored the void and found consequences."),
+                        listOrFallback(configuration, "messages.death-drowning", null, "{player} forgot how breathing works underwater."),
+                        listOrFallback(configuration, "messages.death-fire", null, "{player} is having a rough time with open flames."),
+                        listOrFallback(configuration, "messages.death-void", null, "{player} explored the void and found consequences."),
                         listOrFallback(configuration, "messages.chat-generic", null, "{player}: {message}"),
-                        listOrFallback(configuration, "messages.chat-question", "messages.chat-generic", "{player} asked: {message}"),
-                        listOrFallback(configuration, "messages.chat-excited", "messages.chat-generic", "{player} is feeling intense: {message}"),
-                        listOrFallback(configuration, "messages.chat-greeting", "messages.chat-generic", "{player} has entered the conversation: {message}")
+                        listOrFallback(configuration, "messages.chat-question", null, "{player} asked: {message}"),
+                        listOrFallback(configuration, "messages.chat-excited", null, "{player} is feeling intense: {message}"),
+                        listOrFallback(configuration, "messages.chat-greeting", null, "{player} has entered the conversation: {message}")
                 )
         );
     }
