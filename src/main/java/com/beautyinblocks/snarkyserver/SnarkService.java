@@ -44,8 +44,10 @@ public final class SnarkService {
             case LAVA -> config.messages().deathLava();
             case FALL -> config.messages().deathFall();
             case PVP -> config.messages().deathPvp();
-            // Extension points: route future category-specific pools here when introduced.
-            case DROWNING, FIRE, VOID, GENERIC -> config.messages().deathGeneric();
+            case DROWNING -> config.messages().deathDrowning();
+            case FIRE -> config.messages().deathFire();
+            case VOID -> config.messages().deathVoid();
+            case GENERIC -> config.messages().deathGeneric();
             default -> config.messages().deathGeneric();
         };
 
@@ -122,16 +124,20 @@ public final class SnarkService {
     private double chatChanceForCategory(ChatCategory category) {
         SnarkyConfig.ChatSnark.Chances chances = config.chatSnark().chances();
         return switch (category) {
-            // Extension points: add dedicated chance fields when category-specific tuning is introduced.
-            case QUESTION, EXCITED, GREETING, GENERIC -> chances.generic();
+            case QUESTION -> chances.question();
+            case EXCITED -> chances.excited();
+            case GREETING -> chances.greeting();
+            case GENERIC -> chances.generic();
             default -> chances.generic();
         };
     }
 
     private List<String> chatMessagesForCategory(ChatCategory category) {
         return switch (category) {
-            // Extension points: add dedicated chat pools once categories are configured.
-            case QUESTION, EXCITED, GREETING, GENERIC -> config.messages().chatGeneric();
+            case QUESTION -> config.messages().chatQuestion();
+            case EXCITED -> config.messages().chatExcited();
+            case GREETING -> config.messages().chatGreeting();
+            case GENERIC -> config.messages().chatGeneric();
             default -> config.messages().chatGeneric();
         };
     }
@@ -142,8 +148,10 @@ public final class SnarkService {
             case LAVA -> chances.lava();
             case FALL -> chances.fall();
             case PVP -> chances.pvp();
-            // Extension points: add dedicated config chance fields per category when needed.
-            case DROWNING, FIRE, VOID, GENERIC -> chances.generic();
+            case DROWNING -> chances.drowning();
+            case FIRE -> chances.fire();
+            case VOID -> chances.voidDeath();
+            case GENERIC -> chances.generic();
             default -> chances.generic();
         };
     }

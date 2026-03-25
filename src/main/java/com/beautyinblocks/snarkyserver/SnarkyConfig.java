@@ -12,12 +12,25 @@ public record SnarkyConfig(
         Messages messages
 ) {
     public record DeathSnark(boolean enabled, Chances chances) {
-        public record Chances(double generic, double lava, double fall, double pvp) {
+        public record Chances(
+                double generic,
+                double lava,
+                double fall,
+                double pvp,
+                double drowning,
+                double fire,
+                double voidDeath
+        ) {
         }
     }
 
     public record ChatSnark(boolean enabled, Chances chances, int minMessageLength, boolean ignoreCommands) {
-        public record Chances(double generic) {
+        public record Chances(
+                double generic,
+                double question,
+                double excited,
+                double greeting
+        ) {
         }
     }
 
@@ -32,7 +45,13 @@ public record SnarkyConfig(
             List<String> deathLava,
             List<String> deathFall,
             List<String> deathPvp,
-            List<String> chatGeneric
+            List<String> deathDrowning,
+            List<String> deathFire,
+            List<String> deathVoid,
+            List<String> chatGeneric,
+            List<String> chatQuestion,
+            List<String> chatExcited,
+            List<String> chatGreeting
     ) {
     }
 }

@@ -31,7 +31,7 @@ public final class SnarkListener implements Listener {
 
         Component snark = snarkService.buildDeathReply(player, category, killerName);
         if (snark != null) {
-            event.deathMessage(snark);
+            Bukkit.getScheduler().runTask(plugin, () -> Bukkit.broadcast(snark));
         }
     }
 

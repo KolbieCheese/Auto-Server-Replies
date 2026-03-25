@@ -1,8 +1,14 @@
 package com.beautyinblocks.snarkyserver;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public final class ChatCategoryClassifier {
+    private static final Pattern GREETING_PATTERN = Pattern.compile(
+            "^(hi|hello|hey|yo|howdy|greetings)\\b",
+            Pattern.CASE_INSENSITIVE
+    );
+
     public ChatCategory classify(String messageText) {
         String normalized = messageText == null ? "" : messageText.trim();
         if (normalized.isEmpty()) {
@@ -11,18 +17,32 @@ public final class ChatCategoryClassifier {
 
         String lower = normalized.toLowerCase(Locale.ROOT);
 
-        // Deterministic string checks kept intentionally conservative.
-        // Extension points: return QUESTION/EXCITED/GREETING once dedicated pools/chances are configured.
-        if (normalized.endsWith("?")) {
-            return ChatCategory.GENERIC;
+        if (isQuestion(normalized)) {
+            return ChatCategory.QUESTION;
         }
-        if (normalized.endsWith("!") || normalized.contains("!!")) {
-            return ChatCategory.GENERIC;
+        if (isExcited(normalized)) {
+            return ChatCategory.EXCITED;
         }
-        if (lower.startsWith("hi") || lower.startsWith("hello") || lower.startsWith("hey")) {
-            return ChatCategory.GENERIC;
+        if (isGreeting(lower)) {
+            return ChatCategory.GREETING;
         }
 
         return ChatCategory.GENERIC;
+    }
+
+    private boolean isQuestion(String normalized) {
+        return normalized.endsWith("?")
+                || normalized.contains("??")
+                || normalized.contains("?!")
+                || normalized.contains("!?");
+    }
+
+    private boolean isExcited(String normalized) {
+        return normalized.endsWith("!")
+                || normalized.contains("!!");
+    }
+
+    private boolean isGreeting(String normalizedLowerCase) {
+        return GREETING_PATTERN.matcher(normalizedLowerCase).find();
     }
 }

@@ -36,6 +36,8 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     public void reloadPluginState() {
         reloadConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         initializeServices();
     }
 

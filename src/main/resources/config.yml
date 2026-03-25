@@ -1,26 +1,30 @@
 enabled: true
-# Prefix now uses MiniMessage tags (legacy &-codes are not parsed).
+# MiniMessage prefix for server follow-up replies.
 prefix: "<gray>[<light_purple>Snark<gray>] <reset>"
 
 death-snark:
   enabled: true
-  # Per-category chance to post a death snark message.
-  # Values are 0.0 to 1.0 (for example, 0.20 = 20%).
+  # Per-category chances from 0.0 to 1.0.
   chances:
     generic: 0.20
     lava: 0.20
     fall: 0.20
     pvp: 0.20
-  # Legacy key kept for backward compatibility with older config files.
+    drowning: 0.20
+    fire: 0.20
+    void: 0.20
+  # Legacy fallback for older configs.
   # chance: 0.20
 
 chat-snark:
   enabled: true
-  # Per-category chance to post a chat snark message.
-  # Values are 0.0 to 1.0 (for example, 0.05 = 5%).
+  # Per-category chances from 0.0 to 1.0.
   chances:
     generic: 0.05
-  # Legacy key kept for backward compatibility with older config files.
+    question: 0.05
+    excited: 0.05
+    greeting: 0.05
+  # Legacy fallback for older configs.
   # chance: 0.05
   min-message-length: 6
   ignore-commands: true
@@ -37,15 +41,39 @@ filters:
     - "?"
 
 messages:
+  # Death categories
   death-generic:
     - "{player} has departed this realm in a very normal way."
     - "Another flawless strategy from {player}."
+
   death-lava:
     - "{player} discovered that lava is, in fact, hot."
+
   death-fall:
     - "{player} tested gravity again. Results were consistent."
+
   death-pvp:
     - "{player} got outplayed by {killer}."
+
+  death-drowning:
+    - "{player} ran out of breathing privileges."
+
+  death-fire:
+    - "{player} is currently losing an argument with fire."
+
+  death-void:
+    - "{player} fell into the void and did not win."
+
+  # Chat categories
   chat-generic:
     - "{player} said: {message}"
     - "Thanks for sharing that, {player}: {message}"
+
+  chat-question:
+    - "The server has noted {player}'s question: {message}"
+
+  chat-excited:
+    - "{player} brought maximum energy: {message}"
+
+  chat-greeting:
+    - "The server acknowledges {player}'s arrival: {message}"
