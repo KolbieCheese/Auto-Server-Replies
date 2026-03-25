@@ -35,14 +35,10 @@ public final class SnarkListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onAsyncChat(AsyncChatEvent event) {
-        if (!snarkService.isChatEnabled()) {
-            return;
-        }
-
         String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
-        if (snarkService.shouldSkipChatMessageLightweight(plainMessage)) {
+        if (!snarkService.shouldHandleChatAsync(plainMessage)) {
             return;
         }
 
