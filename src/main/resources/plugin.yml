@@ -4,6 +4,14 @@ main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21'
 author: Beauty in Blocks
 description: Lightweight snarky chat/death responder plugin (compatible with Paper 1.21.11 API)
+commands:
+  snarkreload:
+    description: Reload SnarkyServer configuration.
+    usage: /<command>
+    aliases: [autoreplies]
+    permission: snarkyserver.reload
 permissions:
   snarkyserver.bypass:
+    default: op
+  snarkyserver.reload:
     default: op
