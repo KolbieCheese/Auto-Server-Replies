@@ -1,6 +1,7 @@
 package com.beautyinblocks.snarkyserver;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,7 +13,15 @@ public final class SnarkyServerPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        initializeServices();
+        reloadPluginState();
+
+        PluginCommand reloadCommand = getCommand("snarkreload");
+        if (reloadCommand != null) {
+            reloadCommand.setExecutor(new SnarkReloadCommand(this));
+        } else {
+            getLogger().warning("Command 'snarkreload' was not found in plugin.yml; reload command is unavailable.");
+        }
+
         getLogger().info("SnarkyServerPlugin enabled.");
     }
 
@@ -25,9 +34,13 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         getLogger().info("SnarkyServerPlugin disabled.");
     }
 
+    public void reloadPluginState() {
+        reloadConfig();
+        initializeServices();
+    }
+
     private void initializeServices() {
         HandlerList.unregisterAll(this);
-        reloadConfig();
 
         SnarkyConfig config = SnarkyConfigLoader.load(getConfig());
         cooldownManager = new CooldownManager(config.cooldowns());
