@@ -15,19 +15,21 @@ import java.util.UUID;
 public final class SnarkListener implements Listener {
     private final JavaPlugin plugin;
     private final SnarkService snarkService;
+    private final DeathCategoryClassifier deathCategoryClassifier;
 
-    public SnarkListener(JavaPlugin plugin, SnarkService snarkService) {
+    public SnarkListener(JavaPlugin plugin, SnarkService snarkService, DeathCategoryClassifier deathCategoryClassifier) {
         this.plugin = plugin;
         this.snarkService = snarkService;
+        this.deathCategoryClassifier = deathCategoryClassifier;
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        String causeKey = snarkService.classifyDeath(player);
+        DeathCategory category = deathCategoryClassifier.classify(player);
         String killerName = player.getKiller() == null ? null : player.getKiller().getName();
 
-        Component snark = snarkService.buildDeathReply(player, causeKey, killerName);
+        Component snark = snarkService.buildDeathReply(player, category, killerName);
         if (snark != null) {
             event.deathMessage(snark);
         }
