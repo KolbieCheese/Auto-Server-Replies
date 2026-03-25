@@ -1,0 +1,7 @@
+name: SnarkyServer
+version: '1.0.0'
+main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
+api-version: '1.21'
+authors:
+  - BeautyInBlocks
+description: Snarky server plugin bootstrap.
