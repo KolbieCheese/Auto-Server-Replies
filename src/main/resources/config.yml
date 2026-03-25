@@ -12,8 +12,8 @@ chat-snark:
   ignore-commands: true
 
 cooldowns:
-  per-player-seconds: 30
-  global-seconds: 5
+  per-player-seconds: 120
+  global-seconds: 20
 
 filters:
   bypass-permission: "snarkyserver.bypass"
