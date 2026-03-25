@@ -14,11 +14,11 @@ public final class SnarkyConfigLoader {
                 configuration.getString("prefix", ""),
                 new SnarkyConfig.DeathSnark(
                         configuration.getBoolean("death-snark.enabled", true),
-                        configuration.getDouble("death-snark.chance", 0.35)
+                        configuration.getDouble("death-snark.chance", 0.20)
                 ),
                 new SnarkyConfig.ChatSnark(
                         configuration.getBoolean("chat-snark.enabled", true),
-                        configuration.getDouble("chat-snark.chance", 0.15),
+                        configuration.getDouble("chat-snark.chance", 0.05),
                         configuration.getInt("chat-snark.min-message-length", 6),
                         configuration.getBoolean("chat-snark.ignore-commands", true)
                 ),

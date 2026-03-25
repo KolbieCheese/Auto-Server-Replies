@@ -3,11 +3,11 @@ prefix: "&7[&dSnark&7] "
 
 death-snark:
   enabled: true
-  chance: 0.35
+  chance: 0.20
 
 chat-snark:
   enabled: true
-  chance: 0.15
+  chance: 0.05
   min-message-length: 6
   ignore-commands: true
 
