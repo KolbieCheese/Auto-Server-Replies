@@ -14,17 +14,20 @@ public final class SnarkService {
     private final CooldownManager cooldownManager;
     private final SnarkFormatter formatter;
     private final SnarkyConfig config;
+    private final ChatCategoryClassifier chatCategoryClassifier;
 
     public SnarkService(
             RandomGenerator random,
             CooldownManager cooldownManager,
             SnarkFormatter formatter,
-            SnarkyConfig config
+            SnarkyConfig config,
+            ChatCategoryClassifier chatCategoryClassifier
     ) {
         this.random = random;
         this.cooldownManager = cooldownManager;
         this.formatter = formatter;
         this.config = config;
+        this.chatCategoryClassifier = chatCategoryClassifier;
     }
 
     public Component buildDeathReply(Player player, DeathCategory category, String killerName) {
@@ -58,12 +61,16 @@ public final class SnarkService {
     public Component buildChatReply(Player player, String messageText) {
         if (!canRespondForPlayer(player)
                 || !config.chatSnark().enabled()
-                || shouldSkipChatMessageLightweight(messageText)
-                || !passesChance(config.chatSnark().chances().generic())) {
+                || shouldSkipChatMessageLightweight(messageText)) {
             return null;
         }
 
-        String template = pickRandom(config.messages().chatGeneric());
+        ChatCategory category = chatCategoryClassifier.classify(messageText);
+        if (!passesChance(chatChanceForCategory(category))) {
+            return null;
+        }
+
+        String template = pickRandom(chatMessagesForCategory(category));
         cooldownManager.markResponded(player.getUniqueId(), Instant.now());
         return formatter.format(template, Map.of(
                 "player", player.getName(),
@@ -107,6 +114,23 @@ public final class SnarkService {
 
     private boolean passesChance(double chance) {
         return random.nextDouble() <= Math.max(0.0D, Math.min(1.0D, chance));
+    }
+
+    private double chatChanceForCategory(ChatCategory category) {
+        SnarkyConfig.ChatSnark.Chances chances = config.chatSnark().chances();
+        return switch (category) {
+            // Extension points: add dedicated chance fields when category-specific tuning is introduced.
+            case QUESTION, EXCITED, GREETING, GENERIC -> chances.generic();
+            default -> chances.generic();
+        };
+    }
+
+    private List<String> chatMessagesForCategory(ChatCategory category) {
+        return switch (category) {
+            // Extension points: add dedicated chat pools once categories are configured.
+            case QUESTION, EXCITED, GREETING, GENERIC -> config.messages().chatGeneric();
+            default -> config.messages().chatGeneric();
+        };
     }
 
     private double deathChanceForCategory(DeathCategory category) {
