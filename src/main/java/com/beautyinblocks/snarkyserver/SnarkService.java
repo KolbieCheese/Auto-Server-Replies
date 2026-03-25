@@ -1,11 +1,19 @@
 package com.beautyinblocks.snarkyserver;
 
+import net.kyori.adventure.text.Component;
+import org.bukkit.entity.Player;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public final class SnarkService {
+    private static final String GENERIC = "generic";
+    private static final String LAVA = "lava";
+    private static final String FALL = "fall";
+    private static final String PVP = "pvp";
+
     private final RandomGenerator random;
     private final CooldownManager cooldownManager;
     private final SnarkFormatter formatter;
@@ -23,27 +31,95 @@ public final class SnarkService {
         this.config = config;
     }
 
-    public String buildDeathReply(UUID playerId, String playerName, String worldName, String causeKey, String killerName) {
-        if (!config.enabled() || !config.deathSnark().enabled()) {
-            return null;
-        }
-        if (isIgnoredWorld(worldName) || cooldownManager.isOnCooldown(playerId) || random.nextDouble() > config.deathSnark().chance()) {
+    public Component buildDeathReply(Player player, String causeKey, String killerName) {
+        if (!canRespondForPlayer(player) || !config.deathSnark().enabled() || !passesChance(config.deathSnark().chance())) {
             return null;
         }
 
         List<String> messages = switch (causeKey) {
-            case "lava" -> config.messages().deathLava();
-            case "fall" -> config.messages().deathFall();
-            case "pvp" -> config.messages().deathPvp();
+            case LAVA -> config.messages().deathLava();
+            case FALL -> config.messages().deathFall();
+            case PVP -> config.messages().deathPvp();
             default -> config.messages().deathGeneric();
         };
 
         String message = pickRandom(messages);
-        cooldownManager.markTriggered(playerId);
+        cooldownManager.markTriggered(player.getUniqueId());
         return formatter.format(message, Map.of(
-                "player", playerName,
-                "killer", killerName == null ? "someone" : killerName
+                "player", player.getName(),
+                "killer", killerName == null ? "someone" : killerName,
+                "message", ""
         ));
+    }
+
+    public Component buildChatReply(Player player, String messageText) {
+        if (!canRespondForPlayer(player)
+                || !config.chatSnark().enabled()
+                || shouldSkipChatMessageLightweight(messageText)
+                || !passesChance(config.chatSnark().chance())) {
+            return null;
+        }
+
+        String template = pickRandom(config.messages().chatGeneric());
+        cooldownManager.markTriggered(player.getUniqueId());
+        return formatter.format(template, Map.of(
+                "player", player.getName(),
+                "killer", "",
+                "message", messageText
+        ));
+    }
+
+    public boolean isChatEnabled() {
+        return config.enabled() && config.chatSnark().enabled();
+    }
+
+    public boolean shouldSkipChatMessageLightweight(String messageText) {
+        String trimmed = messageText == null ? "" : messageText.trim();
+        if (trimmed.length() < config.chatSnark().minMessageLength()) {
+            return true;
+        }
+        if (config.chatSnark().ignoreCommands() && trimmed.startsWith("/")) {
+            return true;
+        }
+
+        return config.filters().ignoredPrefixes().stream().anyMatch(trimmed::startsWith);
+    }
+
+    public String classifyDeath(Player player) {
+        if (player.getKiller() != null) {
+            return PVP;
+        }
+
+        if (player.getLastDamageCause() == null) {
+            return GENERIC;
+        }
+
+        return switch (player.getLastDamageCause().getCause()) {
+            case LAVA, HOT_FLOOR, FIRE, FIRE_TICK -> LAVA;
+            case FALL, FLY_INTO_WALL -> FALL;
+            default -> GENERIC;
+        };
+    }
+
+    private boolean canRespondForPlayer(Player player) {
+        if (!config.enabled()) {
+            return false;
+        }
+
+        if (!config.filters().bypassPermission().isBlank() && player.hasPermission(config.filters().bypassPermission())) {
+            return false;
+        }
+
+        if (isIgnoredWorld(player.getWorld().getName())) {
+            return false;
+        }
+
+        UUID playerId = player.getUniqueId();
+        return !cooldownManager.isOnCooldown(playerId);
+    }
+
+    private boolean passesChance(double chance) {
+        return random.nextDouble() <= Math.max(0.0D, Math.min(1.0D, chance));
     }
 
     private String pickRandom(List<String> messages) {

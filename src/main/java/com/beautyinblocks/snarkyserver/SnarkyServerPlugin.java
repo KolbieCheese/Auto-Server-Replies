@@ -39,6 +39,6 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 config
         );
 
-        Bukkit.getPluginManager().registerEvents(new SnarkyListener(snarkService), this);
+        Bukkit.getPluginManager().registerEvents(new SnarkListener(this, snarkService), this);
     }
 }
