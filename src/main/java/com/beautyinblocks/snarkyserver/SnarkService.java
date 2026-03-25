@@ -3,6 +3,7 @@ package com.beautyinblocks.snarkyserver;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,7 +45,7 @@ public final class SnarkService {
         };
 
         String message = pickRandom(messages);
-        cooldownManager.markTriggered(player.getUniqueId());
+        cooldownManager.markResponded(player.getUniqueId(), Instant.now());
         return formatter.format(message, Map.of(
                 "player", player.getName(),
                 "killer", killerName == null ? "someone" : killerName,
@@ -61,7 +62,7 @@ public final class SnarkService {
         }
 
         String template = pickRandom(config.messages().chatGeneric());
-        cooldownManager.markTriggered(player.getUniqueId());
+        cooldownManager.markResponded(player.getUniqueId(), Instant.now());
         return formatter.format(template, Map.of(
                 "player", player.getName(),
                 "killer", "",
@@ -115,7 +116,7 @@ public final class SnarkService {
         }
 
         UUID playerId = player.getUniqueId();
-        return !cooldownManager.isOnCooldown(playerId);
+        return cooldownManager.canRespond(playerId, Instant.now());
     }
 
     private boolean passesChance(double chance) {

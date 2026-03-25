@@ -23,8 +23,8 @@ public final class SnarkyConfigLoader {
                         configuration.getBoolean("chat-snark.ignore-commands", true)
                 ),
                 new SnarkyConfig.Cooldowns(
-                        configuration.getInt("cooldowns.per-player-seconds", 30),
-                        configuration.getInt("cooldowns.global-seconds", 5)
+                        configuration.getInt("cooldowns.per-player-seconds", 120),
+                        configuration.getInt("cooldowns.global-seconds", 20)
                 ),
                 new SnarkyConfig.Filters(
                         configuration.getString("filters.bypass-permission", "snarkyserver.bypass"),
