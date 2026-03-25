@@ -2,6 +2,9 @@ plugins {
     java
 }
 
+import org.gradle.api.tasks.wrapper.Wrapper
+import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
+
 group = "com.beautyinblocks"
 version = "1.0.0"
 
@@ -28,4 +31,9 @@ tasks.jar {
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
+}
+
+tasks.named<Wrapper>("wrapper") {
+    gradleVersion = "8.14.3"
+    distributionType = DistributionType.BIN
 }
