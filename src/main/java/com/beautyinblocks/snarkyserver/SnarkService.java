@@ -10,11 +10,6 @@ import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public final class SnarkService {
-    private static final String GENERIC = "generic";
-    private static final String LAVA = "lava";
-    private static final String FALL = "fall";
-    private static final String PVP = "pvp";
-
     private final RandomGenerator random;
     private final CooldownManager cooldownManager;
     private final SnarkFormatter formatter;
@@ -32,20 +27,22 @@ public final class SnarkService {
         this.config = config;
     }
 
-    public Component buildDeathReply(Player player, String causeKey, String killerName) {
+    public Component buildDeathReply(Player player, DeathCategory category, String killerName) {
         if (!canRespondForPlayer(player) || !config.deathSnark().enabled()) {
             return null;
         }
 
-        double chance = deathChanceForCause(causeKey);
+        double chance = deathChanceForCategory(category);
         if (!passesChance(chance)) {
             return null;
         }
 
-        List<String> messages = switch (causeKey) {
+        List<String> messages = switch (category) {
             case LAVA -> config.messages().deathLava();
             case FALL -> config.messages().deathFall();
             case PVP -> config.messages().deathPvp();
+            // Extension points: route future category-specific pools here when introduced.
+            case DROWNING, FIRE, VOID, GENERIC -> config.messages().deathGeneric();
             default -> config.messages().deathGeneric();
         };
 
@@ -91,22 +88,6 @@ public final class SnarkService {
         return config.filters().ignoredPrefixes().stream().anyMatch(trimmed::startsWith);
     }
 
-    public String classifyDeath(Player player) {
-        if (player.getKiller() != null) {
-            return PVP;
-        }
-
-        if (player.getLastDamageCause() == null) {
-            return GENERIC;
-        }
-
-        return switch (player.getLastDamageCause().getCause()) {
-            case LAVA, HOT_FLOOR, FIRE, FIRE_TICK -> LAVA;
-            case FALL, FLY_INTO_WALL -> FALL;
-            default -> GENERIC;
-        };
-    }
-
     private boolean canRespondForPlayer(Player player) {
         if (!config.enabled()) {
             return false;
@@ -128,12 +109,14 @@ public final class SnarkService {
         return random.nextDouble() <= Math.max(0.0D, Math.min(1.0D, chance));
     }
 
-    private double deathChanceForCause(String causeKey) {
+    private double deathChanceForCategory(DeathCategory category) {
         SnarkyConfig.DeathSnark.Chances chances = config.deathSnark().chances();
-        return switch (causeKey) {
+        return switch (category) {
             case LAVA -> chances.lava();
             case FALL -> chances.fall();
             case PVP -> chances.pvp();
+            // Extension points: add dedicated config chance fields per category when needed.
+            case DROWNING, FIRE, VOID, GENERIC -> chances.generic();
             default -> chances.generic();
         };
     }
