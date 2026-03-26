@@ -29,7 +29,7 @@ public final class SnarkListener implements Listener {
         DeathCategory category = deathCategoryClassifier.classify(player);
         String killerName = player.getKiller() == null ? null : player.getKiller().getName();
 
-        Component snark = snarkService.buildDeathReply(player, category, killerName);
+        Component snark = snarkService.buildAutomaticDeathReply(player, category, killerName);
         if (snark != null) {
             Bukkit.getScheduler().runTask(plugin, () -> Bukkit.broadcast(snark));
         }
@@ -49,7 +49,7 @@ public final class SnarkListener implements Listener {
                 return;
             }
 
-            Component snark = snarkService.buildChatReply(player, plainMessage);
+            Component snark = snarkService.buildAutomaticChatReply(player, plainMessage);
             if (snark != null) {
                 Bukkit.broadcast(snark);
             }

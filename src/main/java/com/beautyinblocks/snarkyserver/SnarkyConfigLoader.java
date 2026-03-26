@@ -2,7 +2,9 @@ package com.beautyinblocks.snarkyserver;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public final class SnarkyConfigLoader {
     private static final double DEFAULT_DEATH_CHANCE = 0.20D;
@@ -14,13 +16,13 @@ public final class SnarkyConfigLoader {
     public static SnarkyConfig load(FileConfiguration configuration) {
         double deathGenericChance = getChance(
                 configuration,
-                "death-snark.chances.generic",
+                DeathCategory.GENERIC.chancePath(),
                 "death-snark.chance",
                 DEFAULT_DEATH_CHANCE
         );
         double chatGenericChance = getChance(
                 configuration,
-                "chat-snark.chances.generic",
+                ChatCategory.GENERIC.chancePath(),
                 "chat-snark.chance",
                 DEFAULT_CHAT_CHANCE
         );
@@ -30,26 +32,18 @@ public final class SnarkyConfigLoader {
                 configuration.getString("prefix", ""),
                 new SnarkyConfig.DeathSnark(
                         configuration.getBoolean("death-snark.enabled", true),
-                        new SnarkyConfig.DeathSnark.Chances(
-                                deathGenericChance,
-                                getChance(configuration, "death-snark.chances.lava", deathGenericChance),
-                                getChance(configuration, "death-snark.chances.fall", deathGenericChance),
-                                getChance(configuration, "death-snark.chances.pvp", deathGenericChance),
-                                getChance(configuration, "death-snark.chances.drowning", deathGenericChance),
-                                getChance(configuration, "death-snark.chances.fire", deathGenericChance),
-                                getChance(configuration, "death-snark.chances.void", deathGenericChance)
-                        )
+                        loadDeathChances(configuration, deathGenericChance)
                 ),
                 new SnarkyConfig.ChatSnark(
                         configuration.getBoolean("chat-snark.enabled", true),
-                        new SnarkyConfig.ChatSnark.Chances(
-                                chatGenericChance,
-                                getChance(configuration, "chat-snark.chances.question", chatGenericChance),
-                                getChance(configuration, "chat-snark.chances.excited", chatGenericChance),
-                                getChance(configuration, "chat-snark.chances.greeting", chatGenericChance)
-                        ),
+                        loadChatChances(configuration, chatGenericChance),
                         configuration.getInt("chat-snark.min-message-length", 6),
-                        configuration.getBoolean("chat-snark.ignore-commands", true)
+                        configuration.getBoolean("chat-snark.ignore-commands", true),
+                        new SnarkyConfig.ChatSnark.SpamBurst(
+                                configuration.getInt("chat-snark.spam-burst.threshold", 3),
+                                configuration.getInt("chat-snark.spam-burst.window-seconds", 8),
+                                configuration.getInt("chat-snark.spam-burst.max-message-length", 12)
+                        )
                 ),
                 new SnarkyConfig.Cooldowns(
                         configuration.getInt("cooldowns.per-player-seconds", 120),
@@ -61,19 +55,66 @@ public final class SnarkyConfigLoader {
                         configuration.getStringList("filters.ignored-prefixes")
                 ),
                 new SnarkyConfig.Messages(
-                        listOrFallback(configuration, "messages.death-generic", null, "Another glorious death by {player}."),
-                        listOrFallback(configuration, "messages.death-lava", "messages.death-generic", "{player} touched lava and regretted it."),
-                        listOrFallback(configuration, "messages.death-fall", "messages.death-generic", "{player} discovered terminal velocity."),
-                        listOrFallback(configuration, "messages.death-pvp", "messages.death-generic", "{player} lost a duel to {killer}."),
-                        listOrFallback(configuration, "messages.death-drowning", null, "{player} forgot how breathing works underwater."),
-                        listOrFallback(configuration, "messages.death-fire", null, "{player} is having a rough time with open flames."),
-                        listOrFallback(configuration, "messages.death-void", null, "{player} explored the void and found consequences."),
-                        listOrFallback(configuration, "messages.chat-generic", null, "{player}: {message}"),
-                        listOrFallback(configuration, "messages.chat-question", null, "{player} asked: {message}"),
-                        listOrFallback(configuration, "messages.chat-excited", null, "{player} is feeling intense: {message}"),
-                        listOrFallback(configuration, "messages.chat-greeting", null, "{player} has entered the conversation: {message}")
+                        loadDeathMessages(configuration),
+                        loadChatMessages(configuration)
                 )
         );
+    }
+
+    private static Map<DeathCategory, Double> loadDeathChances(FileConfiguration configuration, double defaultChance) {
+        EnumMap<DeathCategory, Double> chances = new EnumMap<>(DeathCategory.class);
+        for (DeathCategory category : DeathCategory.values()) {
+            chances.put(category, getChance(configuration, category.chancePath(), defaultChance));
+        }
+        return chances;
+    }
+
+    private static Map<ChatCategory, Double> loadChatChances(FileConfiguration configuration, double defaultChance) {
+        EnumMap<ChatCategory, Double> chances = new EnumMap<>(ChatCategory.class);
+        for (ChatCategory category : ChatCategory.values()) {
+            chances.put(category, getChance(configuration, category.chancePath(), defaultChance));
+        }
+        return chances;
+    }
+
+    private static Map<DeathCategory, List<String>> loadDeathMessages(FileConfiguration configuration) {
+        EnumMap<DeathCategory, List<String>> messages = new EnumMap<>(DeathCategory.class);
+        List<String> generic = listOrFallback(
+                configuration,
+                DeathCategory.GENERIC.messagePath(),
+                null,
+                "{player} really committed to that mistake."
+        );
+        messages.put(DeathCategory.GENERIC, generic);
+
+        for (DeathCategory category : DeathCategory.values()) {
+            if (category == DeathCategory.GENERIC) {
+                continue;
+            }
+            messages.put(category, listOrFallback(configuration, category.messagePath(), DeathCategory.GENERIC.messagePath(), generic.get(0)));
+        }
+
+        return messages;
+    }
+
+    private static Map<ChatCategory, List<String>> loadChatMessages(FileConfiguration configuration) {
+        EnumMap<ChatCategory, List<String>> messages = new EnumMap<>(ChatCategory.class);
+        List<String> generic = listOrFallback(
+                configuration,
+                ChatCategory.GENERIC.messagePath(),
+                null,
+                "That sounded better in your head, {player}."
+        );
+        messages.put(ChatCategory.GENERIC, generic);
+
+        for (ChatCategory category : ChatCategory.values()) {
+            if (category == ChatCategory.GENERIC) {
+                continue;
+            }
+            messages.put(category, listOrFallback(configuration, category.messagePath(), ChatCategory.GENERIC.messagePath(), generic.get(0)));
+        }
+
+        return messages;
     }
 
     private static double getChance(FileConfiguration configuration, String path, double fallback) {
@@ -104,13 +145,13 @@ public final class SnarkyConfigLoader {
             String hardcodedFallback
     ) {
         List<String> primary = configuration.getStringList(path);
-        if (primary != null && !primary.isEmpty()) {
+        if (!primary.isEmpty()) {
             return List.copyOf(primary);
         }
 
         if (fallbackPath != null) {
             List<String> fallbackValues = configuration.getStringList(fallbackPath);
-            if (fallbackValues != null && !fallbackValues.isEmpty()) {
+            if (!fallbackValues.isEmpty()) {
                 return List.copyOf(fallbackValues);
             }
         }

@@ -10,74 +10,69 @@ import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public final class SnarkService {
+    private static final ReplyGate AUTOMATIC_GATE = new ReplyGate(true, true, true, true);
+    private static final ReplyGate FORCED_GATE = new ReplyGate(false, false, false, false);
+
     private final RandomGenerator random;
     private final CooldownManager cooldownManager;
     private final SnarkFormatter formatter;
     private final SnarkyConfig config;
     private final ChatCategoryClassifier chatCategoryClassifier;
+    private final ChatBurstTracker chatBurstTracker;
 
     public SnarkService(
             RandomGenerator random,
             CooldownManager cooldownManager,
             SnarkFormatter formatter,
             SnarkyConfig config,
-            ChatCategoryClassifier chatCategoryClassifier
+            ChatCategoryClassifier chatCategoryClassifier,
+            ChatBurstTracker chatBurstTracker
     ) {
         this.random = random;
         this.cooldownManager = cooldownManager;
         this.formatter = formatter;
         this.config = config;
         this.chatCategoryClassifier = chatCategoryClassifier;
+        this.chatBurstTracker = chatBurstTracker;
     }
 
-    public Component buildDeathReply(Player player, DeathCategory category, String killerName) {
-        if (!canRespondForPlayer(player) || !config.deathSnark().enabled()) {
-            return null;
-        }
-
-        double chance = deathChanceForCategory(category);
-        if (!passesChance(chance)) {
-            return null;
-        }
-
-        List<String> messages = switch (category) {
-            case LAVA -> config.messages().deathLava();
-            case FALL -> config.messages().deathFall();
-            case PVP -> config.messages().deathPvp();
-            case DROWNING -> config.messages().deathDrowning();
-            case FIRE -> config.messages().deathFire();
-            case VOID -> config.messages().deathVoid();
-            case GENERIC -> config.messages().deathGeneric();
-            default -> config.messages().deathGeneric();
-        };
-
-        String message = pickRandom(messages);
-        cooldownManager.markResponded(player.getUniqueId(), Instant.now());
-        return formatter.format(message, Map.of(
-                "player", player.getName(),
-                "killer", killerName == null ? "someone" : killerName,
-                "message", ""
-        ));
+    public Component buildAutomaticDeathReply(Player player, DeathCategory category, String killerName) {
+        return buildDeathReply(player, player.getName(), category, killerName, AUTOMATIC_GATE);
     }
 
-    public Component buildChatReply(Player player, String messageText) {
-        if (!canRespondForPlayer(player)
-                || !config.chatSnark().enabled()) {
-            return null;
+    public Component buildAutomaticChatReply(Player player, String messageText) {
+        String normalized = normalize(messageText);
+        Instant now = Instant.now();
+        boolean spamBurstTriggered = chatBurstTracker.recordAndCheck(
+                player.getUniqueId(),
+                normalized,
+                now,
+                config.chatSnark().spamBurst()
+        );
+        ChatCategory category = chatCategoryClassifier.classify(normalized, spamBurstTriggered);
+        return buildChatReply(player, player.getName(), category, normalized, AUTOMATIC_GATE, now);
+    }
+
+    public Component buildTestDeathReply(String playerName, DeathCategory category, String killerName) {
+        return buildDeathReply(null, safeName(playerName), category, killerName, FORCED_GATE);
+    }
+
+    public Component buildTestChatReply(String playerName, ChatCategory category, String messageText) {
+        String normalized = normalize(messageText);
+        String resolvedMessage = normalized.isBlank() ? category.defaultTestMessage() : normalized;
+        return buildChatReply(null, safeName(playerName), category, resolvedMessage, FORCED_GATE, Instant.now());
+    }
+
+    public Component buildRandomTestReply(String playerName) {
+        String resolvedPlayer = safeName(playerName);
+        if (random.nextBoolean()) {
+            DeathCategory category = DeathCategory.values()[random.nextInt(DeathCategory.values().length)];
+            String killerName = category == DeathCategory.PVP ? "someone" : "";
+            return buildTestDeathReply(resolvedPlayer, category, killerName);
         }
 
-        ChatCategory category = chatCategoryClassifier.classify(messageText);
-        if (!passesChance(chatChanceForCategory(category))) {
-            return null;
-        }
-
-        String template = pickRandom(chatMessagesForCategory(category));
-        cooldownManager.markResponded(player.getUniqueId(), Instant.now());
-        return formatter.format(template, Map.of(
-                "player", player.getName(),
-                "killer", "",
-                "message", messageText
-        ));
+        ChatCategory category = ChatCategory.values()[random.nextInt(ChatCategory.values().length)];
+        return buildTestChatReply(resolvedPlayer, category, category.defaultTestMessage());
     }
 
     public boolean isChatEnabled() {
@@ -89,7 +84,7 @@ public final class SnarkService {
     }
 
     public boolean shouldSkipChatMessageLightweight(String messageText) {
-        String trimmed = messageText == null ? "" : messageText.trim();
+        String trimmed = normalize(messageText);
         if (trimmed.length() < config.chatSnark().minMessageLength()) {
             return true;
         }
@@ -100,67 +95,106 @@ public final class SnarkService {
         return config.filters().ignoredPrefixes().stream().anyMatch(trimmed::startsWith);
     }
 
-    private boolean canRespondForPlayer(Player player) {
-        if (!config.enabled()) {
+    public SnarkyConfig config() {
+        return config;
+    }
+
+    private Component buildDeathReply(Player player, String playerName, DeathCategory category, String killerName, ReplyGate gate) {
+        Instant now = Instant.now();
+        if (!passesSharedChecks(player, gate, now, config.deathSnark().enabled())) {
+            return null;
+        }
+        if (gate.checkChance() && !passesChance(config.deathSnark().chanceFor(category))) {
+            return null;
+        }
+
+        Component component = render(config.messages().deathMessagesFor(category), Map.of(
+                "player", playerName,
+                "killer", safeNameOrFallback(killerName, "someone"),
+                "message", ""
+        ));
+        if (component != null && gate.checkCooldowns() && player != null) {
+            cooldownManager.markResponded(player.getUniqueId(), now);
+        }
+        return component;
+    }
+
+    private Component buildChatReply(
+            Player player,
+            String playerName,
+            ChatCategory category,
+            String messageText,
+            ReplyGate gate,
+            Instant now
+    ) {
+        if (!passesSharedChecks(player, gate, now, config.chatSnark().enabled())) {
+            return null;
+        }
+        if (gate.checkChance() && !passesChance(config.chatSnark().chanceFor(category))) {
+            return null;
+        }
+
+        Component component = render(config.messages().chatMessagesFor(category), Map.of(
+                "player", playerName,
+                "killer", "",
+                "message", messageText
+        ));
+        if (component != null && gate.checkCooldowns() && player != null) {
+            cooldownManager.markResponded(player.getUniqueId(), now);
+        }
+        return component;
+    }
+
+    private boolean passesSharedChecks(Player player, ReplyGate gate, Instant now, boolean familyEnabled) {
+        if (gate.checkEnabled() && (!config.enabled() || !familyEnabled)) {
+            return false;
+        }
+        if (!gate.checkFilters() && !gate.checkCooldowns()) {
+            return true;
+        }
+        if (player == null) {
+            return false;
+        }
+        if (gate.checkFilters() && !passesPlayerFilters(player)) {
             return false;
         }
 
+        return !gate.checkCooldowns() || cooldownManager.canRespond(player.getUniqueId(), now);
+    }
+
+    private boolean passesPlayerFilters(Player player) {
         if (!config.filters().bypassPermission().isBlank() && player.hasPermission(config.filters().bypassPermission())) {
             return false;
         }
 
-        if (isIgnoredWorld(player.getWorld().getName())) {
-            return false;
-        }
-
-        UUID playerId = player.getUniqueId();
-        return cooldownManager.canRespond(playerId, Instant.now());
+        return config.filters().ignoredWorlds().stream()
+                .noneMatch(world -> world.equalsIgnoreCase(player.getWorld().getName()));
     }
 
     private boolean passesChance(double chance) {
         return random.nextDouble() <= Math.max(0.0D, Math.min(1.0D, chance));
     }
 
-    private double chatChanceForCategory(ChatCategory category) {
-        SnarkyConfig.ChatSnark.Chances chances = config.chatSnark().chances();
-        return switch (category) {
-            case QUESTION -> chances.question();
-            case EXCITED -> chances.excited();
-            case GREETING -> chances.greeting();
-            case GENERIC -> chances.generic();
-            default -> chances.generic();
-        };
+    private Component render(List<String> messages, Map<String, String> values) {
+        if (messages == null || messages.isEmpty()) {
+            return null;
+        }
+        return formatter.format(messages.get(random.nextInt(messages.size())), values);
     }
 
-    private List<String> chatMessagesForCategory(ChatCategory category) {
-        return switch (category) {
-            case QUESTION -> config.messages().chatQuestion();
-            case EXCITED -> config.messages().chatExcited();
-            case GREETING -> config.messages().chatGreeting();
-            case GENERIC -> config.messages().chatGeneric();
-            default -> config.messages().chatGeneric();
-        };
+    private String normalize(String input) {
+        return input == null ? "" : input.trim();
     }
 
-    private double deathChanceForCategory(DeathCategory category) {
-        SnarkyConfig.DeathSnark.Chances chances = config.deathSnark().chances();
-        return switch (category) {
-            case LAVA -> chances.lava();
-            case FALL -> chances.fall();
-            case PVP -> chances.pvp();
-            case DROWNING -> chances.drowning();
-            case FIRE -> chances.fire();
-            case VOID -> chances.voidDeath();
-            case GENERIC -> chances.generic();
-            default -> chances.generic();
-        };
+    private String safeName(String playerName) {
+        return safeNameOrFallback(playerName, "Player");
     }
 
-    private String pickRandom(List<String> messages) {
-        return messages.get(random.nextInt(messages.size()));
+    private String safeNameOrFallback(String value, String fallback) {
+        String normalized = normalize(value);
+        return normalized.isBlank() ? fallback : normalized;
     }
 
-    private boolean isIgnoredWorld(String worldName) {
-        return config.filters().ignoredWorlds().stream().anyMatch(world -> world.equalsIgnoreCase(worldName));
+    private record ReplyGate(boolean checkEnabled, boolean checkFilters, boolean checkChance, boolean checkCooldowns) {
     }
 }

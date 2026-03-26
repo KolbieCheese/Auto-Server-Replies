@@ -1,6 +1,5 @@
 enabled: true
-# MiniMessage prefix for server follow-up replies.
-prefix: "<gray>[<light_purple>Snark<gray>] <reset>"
+prefix: "<white>[Server] <reset>"
 
 death-snark:
   enabled: true
@@ -13,6 +12,11 @@ death-snark:
     drowning: 0.20
     fire: 0.20
     void: 0.20
+    explosion: 0.20
+    suffocation: 0.20
+    starvation: 0.20
+    projectile: 0.20
+    freezing: 0.20
   # Legacy fallback for older configs.
   # chance: 0.20
 
@@ -24,10 +28,19 @@ chat-snark:
     question: 0.05
     excited: 0.05
     greeting: 0.05
+    lag: 0.05
+    brag: 0.05
+    confusion: 0.05
+    spam: 0.05
+    celebration: 0.05
   # Legacy fallback for older configs.
   # chance: 0.05
   min-message-length: 6
   ignore-commands: true
+  spam-burst:
+    threshold: 3
+    window-seconds: 8
+    max-message-length: 12
 
 cooldowns:
   per-player-seconds: 120
@@ -41,39 +54,129 @@ filters:
     - "?"
 
 messages:
-  # Death categories
   death-generic:
-    - "{player} has departed this realm in a very normal way."
-    - "Another flawless strategy from {player}."
+    - "{player} really committed to that mistake."
+    - "That looked intentional, {player}."
+    - "{player} vs reality: reality wins again."
+    - "Rest in pieces, {player}."
+    - "{player} has left the realm of competence."
 
   death-lava:
-    - "{player} discovered that lava is, in fact, hot."
+    - "{player} tested the lava. It’s still lava."
+    - "Lava remains undefeated."
+    - "{player} made a bold temperature decision."
+    - "That was never going to end well."
 
   death-fall:
-    - "{player} tested gravity again. Results were consistent."
+    - "{player} briefly believed in flight."
+    - "Gravity strikes again."
+    - "{player} learned about gravity the hard way."
+    - "That was a long way down."
 
   death-pvp:
-    - "{player} got outplayed by {killer}."
+    - "{player} lost that interaction with {killer}."
+    - "{killer} had a better plan than {player}."
+    - "{player} was removed from the situation by {killer}."
+    - "That could’ve gone better for {player}."
 
   death-drowning:
-    - "{player} ran out of breathing privileges."
+    - "{player} forgot how breathing works."
+    - "Water: 1, {player}: 0."
+    - "{player} should’ve come up for air."
 
   death-fire:
-    - "{player} is currently losing an argument with fire."
+    - "{player} is no longer flammable. Problem solved."
+    - "That escalated quickly."
+    - "{player} really leaned into the fire."
 
   death-void:
-    - "{player} fell into the void and did not win."
+    - "{player} fell out of existence."
+    - "The void accepts another offering."
+    - "{player} is no longer a problem."
 
-  # Chat categories
+  death-explosion:
+    - "{player} stood too close to a very persuasive blast."
+    - "Explosions continue to discourage poor positioning."
+    - "{player} lost an argument with the blast radius."
+
+  death-suffocation:
+    - "{player} discovered that walls are not breathable."
+    - "Air was nearby. {player} simply chose a worse option."
+    - "{player} has been outplayed by solid matter."
+
+  death-starvation:
+    - "{player} ignored food until the problem solved itself."
+    - "Apparently eating was optional, according to {player}."
+    - "{player} lost a long, quiet fight with hunger."
+
+  death-projectile:
+    - "{player} got remotely discouraged."
+    - "That shot had a better destination than {player}."
+    - "{player} was selected from a distance."
+
+  death-freezing:
+    - "{player} has become a cautionary weather report."
+    - "Turns out standing still in the cold had consequences."
+    - "{player} lost to temperature again."
+
   chat-generic:
-    - "{player} said: {message}"
-    - "Thanks for sharing that, {player}: {message}"
+    - "That sounded better in your head, {player}."
+    - "Fascinating. Continue, {player}."
+    - "The server is processing that. Slowly."
+    - "We’re all slightly worse off after reading that, {player}."
+    - "You really hit send on that, huh {player}?"
+    - "Bold strategy, {player}."
+    - "The confidence is impressive, if nothing else."
+    - "That’s one way to say it, {player}."
+    - "Noted. Ignored. Moving on."
 
   chat-question:
-    - "The server has noted {player}'s question: {message}"
+    - "Great question, {player}. Shame nobody asked me."
+    - "Have you tried figuring it out, {player}?"
+    - "The answer exists somewhere. Good luck."
+    - "That’s a question, technically."
+    - "The server refuses to comment at this time."
 
   chat-excited:
-    - "{player} brought maximum energy: {message}"
+    - "Calm down, {player}. It’s not that serious."
+    - "That’s a lot of emotion for this server."
+    - "We get it, {player}. You’re excited."
+    - "You could’ve said that quieter."
+    - "The enthusiasm is… noted."
 
   chat-greeting:
-    - "The server acknowledges {player}'s arrival: {message}"
+    - "Welcome back, {player}. We lowered our expectations."
+    - "{player} has joined the conversation. Brace yourselves."
+    - "Hello, {player}. Try to behave this time."
+    - "Oh look, it’s {player}."
+    - "Welcome, {player}. Let’s see how this goes."
+
+  chat-lag:
+    - "Yes, {player}, the server is clearly responsible for everything."
+    - "Lag complaints detected. Morale unchanged."
+    - "The server heard 'lag' and became less interested."
+    - "If you say TPS confidently enough, maybe it helps."
+
+  chat-brag:
+    - "We’re all very impressed, {player}. Allegedly."
+    - "Please, {player}, tell us more about your greatness."
+    - "Confidence noted. Evidence pending."
+    - "{player} has submitted another application for admiration."
+
+  chat-confusion:
+    - "An excellent mystery, {player}. Best of luck."
+    - "You could read the room, {player}. Or the signs."
+    - "Somewhere, the answer is already disappointed in you."
+    - "That does sound like a you problem, {player}."
+
+  chat-spam:
+    - "Rapid-fire nonsense detected from {player}."
+    - "Maybe put all of that into one message next time, {player}."
+    - "{player} appears to be communicating in bursts."
+    - "The server got the point three messages ago, {player}."
+
+  chat-celebration:
+    - "There it is, {player}. A rare moment of competence."
+    - "Congratulations, {player}. Try not to peak too early."
+    - "Enjoy the victory, {player}. It may not happen twice."
+    - "Remarkable. Something worked for {player}."

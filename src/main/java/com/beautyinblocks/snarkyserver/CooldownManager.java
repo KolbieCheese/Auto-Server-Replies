@@ -31,6 +31,23 @@ public final class CooldownManager {
         globalLastResponse.set(now);
     }
 
+    public synchronized Duration remainingForPlayer(UUID playerId, Instant now) {
+        Instant lastPlayerResponse = lastResponseByPlayer.getOrDefault(playerId, Instant.EPOCH);
+        Instant readyAt = lastPlayerResponse.plus(perPlayerDuration);
+        if (!now.isBefore(readyAt)) {
+            return Duration.ZERO;
+        }
+        return Duration.between(now, readyAt);
+    }
+
+    public synchronized Duration remainingGlobal(Instant now) {
+        Instant readyAt = globalLastResponse.get().plus(globalDuration);
+        if (!now.isBefore(readyAt)) {
+            return Duration.ZERO;
+        }
+        return Duration.between(now, readyAt);
+    }
+
     public void clear() {
         lastResponseByPlayer.clear();
         globalLastResponse.set(Instant.EPOCH);

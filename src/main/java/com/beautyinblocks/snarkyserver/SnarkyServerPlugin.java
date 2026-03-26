@@ -9,6 +9,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
+    private ChatBurstTracker chatBurstTracker;
+    private SnarkService snarkService;
 
     @Override
     public void onEnable() {
@@ -17,9 +19,18 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
         PluginCommand reloadCommand = getCommand("snarkreload");
         if (reloadCommand != null) {
-            reloadCommand.setExecutor(new SnarkReloadCommand(this));
+            reloadCommand.setExecutor(new SnarkReloadCommand(this::reloadPluginState, getLogger()));
         } else {
             getLogger().warning("Command 'snarkreload' was not found in plugin.yml; reload command is unavailable.");
+        }
+
+        PluginCommand testCommand = getCommand("snarktest");
+        if (testCommand != null) {
+            SnarkTestCommand executor = new SnarkTestCommand(getServer(), this::getSnarkService, this::getCooldownManager);
+            testCommand.setExecutor(executor);
+            testCommand.setTabCompleter(executor);
+        } else {
+            getLogger().warning("Command 'snarktest' was not found in plugin.yml; test command is unavailable.");
         }
 
         getLogger().info("SnarkyServerPlugin enabled.");
@@ -30,6 +41,9 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         HandlerList.unregisterAll(this);
         if (cooldownManager != null) {
             cooldownManager.clear();
+        }
+        if (chatBurstTracker != null) {
+            chatBurstTracker.clear();
         }
         getLogger().info("SnarkyServerPlugin disabled.");
     }
@@ -46,20 +60,30 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
         SnarkyConfig config = SnarkyConfigLoader.load(getConfig());
         cooldownManager = new CooldownManager(config.cooldowns());
+        chatBurstTracker = new ChatBurstTracker();
         SnarkFormatter formatter = new SnarkFormatter(config.prefix());
         DeathCategoryClassifier deathCategoryClassifier = new DeathCategoryClassifier();
         ChatCategoryClassifier chatCategoryClassifier = new ChatCategoryClassifier();
-        SnarkService snarkService = new SnarkService(
+        snarkService = new SnarkService(
                 ThreadLocalRandom.current(),
                 cooldownManager,
                 formatter,
                 config,
-                chatCategoryClassifier
+                chatCategoryClassifier,
+                chatBurstTracker
         );
 
         Bukkit.getPluginManager().registerEvents(
                 new SnarkListener(this, snarkService, deathCategoryClassifier),
                 this
         );
+    }
+
+    public CooldownManager getCooldownManager() {
+        return cooldownManager;
+    }
+
+    public SnarkService getSnarkService() {
+        return snarkService;
     }
 }

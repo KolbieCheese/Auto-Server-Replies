@@ -1,6 +1,8 @@
 package com.beautyinblocks.snarkyserver;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public record SnarkyConfig(
         boolean enabled,
@@ -11,26 +13,32 @@ public record SnarkyConfig(
         Filters filters,
         Messages messages
 ) {
-    public record DeathSnark(boolean enabled, Chances chances) {
-        public record Chances(
-                double generic,
-                double lava,
-                double fall,
-                double pvp,
-                double drowning,
-                double fire,
-                double voidDeath
-        ) {
+    public record DeathSnark(boolean enabled, Map<DeathCategory, Double> chances) {
+        public DeathSnark {
+            chances = immutableEnumMap(DeathCategory.class, chances);
+        }
+
+        public double chanceFor(DeathCategory category) {
+            return chances.getOrDefault(category, chances.getOrDefault(DeathCategory.GENERIC, 0.0D));
         }
     }
 
-    public record ChatSnark(boolean enabled, Chances chances, int minMessageLength, boolean ignoreCommands) {
-        public record Chances(
-                double generic,
-                double question,
-                double excited,
-                double greeting
-        ) {
+    public record ChatSnark(
+            boolean enabled,
+            Map<ChatCategory, Double> chances,
+            int minMessageLength,
+            boolean ignoreCommands,
+            SpamBurst spamBurst
+    ) {
+        public ChatSnark {
+            chances = immutableEnumMap(ChatCategory.class, chances);
+        }
+
+        public double chanceFor(ChatCategory category) {
+            return chances.getOrDefault(category, chances.getOrDefault(ChatCategory.GENERIC, 0.0D));
+        }
+
+        public record SpamBurst(int threshold, int windowSeconds, int maxMessageLength) {
         }
     }
 
@@ -38,20 +46,39 @@ public record SnarkyConfig(
     }
 
     public record Filters(String bypassPermission, List<String> ignoredWorlds, List<String> ignoredPrefixes) {
+        public Filters {
+            ignoredWorlds = List.copyOf(ignoredWorlds);
+            ignoredPrefixes = List.copyOf(ignoredPrefixes);
+        }
     }
 
     public record Messages(
-            List<String> deathGeneric,
-            List<String> deathLava,
-            List<String> deathFall,
-            List<String> deathPvp,
-            List<String> deathDrowning,
-            List<String> deathFire,
-            List<String> deathVoid,
-            List<String> chatGeneric,
-            List<String> chatQuestion,
-            List<String> chatExcited,
-            List<String> chatGreeting
+            Map<DeathCategory, List<String>> deathMessages,
+            Map<ChatCategory, List<String>> chatMessages
     ) {
+        public Messages {
+            deathMessages = copyMessageMap(DeathCategory.class, deathMessages);
+            chatMessages = copyMessageMap(ChatCategory.class, chatMessages);
+        }
+
+        public List<String> deathMessagesFor(DeathCategory category) {
+            return deathMessages.getOrDefault(category, deathMessages.getOrDefault(DeathCategory.GENERIC, List.of()));
+        }
+
+        public List<String> chatMessagesFor(ChatCategory category) {
+            return chatMessages.getOrDefault(category, chatMessages.getOrDefault(ChatCategory.GENERIC, List.of()));
+        }
+    }
+
+    private static <E extends Enum<E>> Map<E, Double> immutableEnumMap(Class<E> enumType, Map<E, Double> source) {
+        EnumMap<E, Double> copy = new EnumMap<>(enumType);
+        copy.putAll(source);
+        return Map.copyOf(copy);
+    }
+
+    private static <E extends Enum<E>> Map<E, List<String>> copyMessageMap(Class<E> enumType, Map<E, List<String>> source) {
+        EnumMap<E, List<String>> copy = new EnumMap<>(enumType);
+        source.forEach((key, value) -> copy.put(key, List.copyOf(value)));
+        return Map.copyOf(copy);
     }
 }

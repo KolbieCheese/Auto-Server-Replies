@@ -6,11 +6,16 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
-public final class SnarkReloadCommand implements CommandExecutor {
-    private final SnarkyServerPlugin plugin;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-    public SnarkReloadCommand(SnarkyServerPlugin plugin) {
-        this.plugin = plugin;
+public final class SnarkReloadCommand implements CommandExecutor {
+    private final Runnable reloadAction;
+    private final Logger logger;
+
+    public SnarkReloadCommand(Runnable reloadAction, Logger logger) {
+        this.reloadAction = reloadAction;
+        this.logger = logger;
     }
 
     @Override
@@ -21,12 +26,11 @@ public final class SnarkReloadCommand implements CommandExecutor {
         }
 
         try {
-            plugin.reloadPluginState();
+            reloadAction.run();
             sender.sendMessage(ChatColor.GREEN + "SnarkyServer configuration reloaded.");
         } catch (Exception ex) {
             sender.sendMessage(ChatColor.RED + "Failed to reload SnarkyServer configuration. Check console for details.");
-            plugin.getLogger().severe("Failed to reload SnarkyServer configuration: " + ex.getMessage());
-            ex.printStackTrace();
+            logger.log(Level.SEVERE, "Failed to reload SnarkyServer configuration.", ex);
         }
 
         return true;
