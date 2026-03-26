@@ -24,15 +24,15 @@ chat-snark:
   enabled: true
   # Per-category chances from 0.0 to 1.0.
   chances:
-    generic: 0.05
-    question: 0.05
-    excited: 0.05
-    greeting: 0.05
-    lag: 0.05
-    brag: 0.05
-    confusion: 0.05
-    spam: 0.05
-    celebration: 0.05
+    generic: 0.20
+    question: 0.15
+    excited: 0.60
+    greeting: 0.25
+    lag: 0.10
+    brag: 0.30
+    confusion: 0.10
+    spam: 0.30
+    celebration: 0.10
   # Legacy fallback for older configs.
   # chance: 0.05
   min-message-length: 6
@@ -65,128 +65,128 @@ messages:
   # - MiniMessage formatting is supported in any message.
   # - Quote messages when YAML punctuation like :, ?, #, or leading/trailing spaces could be misread.
   death-generic:
-    - "{player} really committed to that mistake."
-    - "That looked intentional, {player}."
+    - "{player} really dumb*ss"
+    - "Can you at least try, {player}."
     - "{player} vs reality: reality wins again."
     - "Rest in pieces, {player}."
     - "{player} has left the realm of competence."
 
   death-lava:
-    - "{player} tested the lava. It’s still lava."
-    - "Lava remains undefeated."
-    - "{player} made a bold temperature decision."
-    - "That was never going to end well."
+    - "{player} didn't feel good did it?"
+    - "{player} you would be this dumb"
+    - "This is why your dad left {player}"
 
   death-fall:
-    - "{player} briefly believed in flight."
-    - "Gravity strikes again."
-    - "{player} learned about gravity the hard way."
-    - "That was a long way down."
+    - "{player} don't do that"
+    - "Gravity is a middleschool science dumb*ss"
+    - "You never try do you {player}?"
+    - "We all talked {player}, and we all hate you"
 
   death-pvp:
-    - "{player} lost that interaction with {killer}."
-    - "{killer} had a better plan than {player}."
-    - "{player} was removed from the situation by {killer}."
-    - "That could’ve gone better for {player}."
+    - "{player} could you at least try"
+    - "{killer}, {player} called you a little b*tch"
+    - "This is why everyone hates you {killer}"
+    - "You've gotta click to hit them back dumb*ss"
+    - "You're both b*tches, {player} & {killer}"
+    - "Your mom drank while she was pregnant huh, {player}"
+    - "{killer} did what your parents never had the courage to do"
 
   death-drowning:
-    - "{player} forgot how breathing works."
-    - "Water: 1, {player}: 0."
-    - "{player} should’ve come up for air."
+    - "{player} don't swallow the water you f*ckin dumb*ss"
+    - "Literally just swim up {player}"
 
   death-fire:
-    - "{player} is no longer flammable. Problem solved."
-    - "That escalated quickly."
+    - "{player} stop, drop, and roll idiot"
+    - "Are you all this dumb?"
     - "{player} really leaned into the fire."
 
   death-void:
-    - "{player} fell out of existence."
-    - "The void accepts another offering."
-    - "{player} is no longer a problem."
+    - "{player} literally just don't fall"
+    - "Professional idiot overhere"
+    - "{player} is a problem"
 
   death-explosion:
-    - "{player} stood too close to a very persuasive blast."
-    - "Explosions continue to discourage poor positioning."
-    - "{player} lost an argument with the blast radius."
+    - "{player} don't do that"
+    - "Living isn't for everyone ig"
+    - "Next time try not to be there {player}"
 
   death-suffocation:
-    - "{player} discovered that walls are not breathable."
-    - "Air was nearby. {player} simply chose a worse option."
-    - "{player} has been outplayed by solid matter."
+    - "{player} walls are not breathable"
+    - "Are we even trying anymore?"
+    - "{player} can't even breath right"
 
   death-starvation:
-    - "{player} ignored food until the problem solved itself."
-    - "Apparently eating was optional, according to {player}."
-    - "{player} lost a long, quiet fight with hunger."
+    - "{player} surpising considering your eating habits"
+    - "I didn't know eating was optional for {player}."
+    - "{player} you're a loser"
 
   death-projectile:
-    - "{player} got remotely discouraged."
-    - "That shot had a better destination than {player}."
-    - "{player} was selected from a distance."
+    - "{player} just move dumb*ss"
+    - "What a wast of an projectile {killer}"
+    - "{player} just try for once holy sh*t"
 
   death-freezing:
-    - "{player} has become a cautionary weather report."
-    - "Turns out standing still in the cold had consequences."
-    - "{player} lost to temperature again."
+    - "{player} try not doing that"
+    - "Literally just dig out of it {player}"
 
   chat-generic:
-    - "That sounded better in your head, {player}."
-    - "Fascinating. Continue, {player}."
-    - "The server is processing that. Slowly."
+    - "That sounded better in your head, {player}"
+    - "No one asked, {player}"
+    - "We all talk about you when you're offline {player}"
     - "We’re all slightly worse off after reading that, {player}."
-    - "You really hit send on that, huh {player}?"
-    - "Bold strategy, {player}."
-    - "The confidence is impressive, if nothing else."
-    - "That’s one way to say it, {player}."
-    - "Noted. Ignored. Moving on."
+    - "They just let anyone join huh"
+    - "We'd be better off without {player}"
+    - "It'd be so nice if you just stfu"
 
   chat-question:
-    - "Great question, {player}. Shame nobody asked me."
+    - "Great question, {player}. Shame nobody asked"
     - "Have you tried figuring it out, {player}?"
-    - "The answer exists somewhere. Good luck."
-    - "That’s a question, technically."
-    - "The server refuses to comment at this time."
+    - "You always ask the dumbest sh*t"
+    - "School's not for everyone ig"
+    - "stfu"
+    - "Nobody cares {player}"
 
   chat-excited:
-    - "Calm down, {player}. It’s not that serious."
-    - "That’s a lot of emotion for this server."
-    - "We get it, {player}. You’re excited."
-    - "You could’ve said that quieter."
-    - "The enthusiasm is… noted."
+    - "Calm down, {player}. It’s not that serious"
+    - "We get it, {player}, now get a job"
+    - "No one cares"
+    - "Keep it to yourself {player}"
+    - "Stfu"
 
   chat-greeting:
-    - "Welcome back, {player}. We lowered our expectations."
-    - "{player} has joined the conversation. Brace yourselves."
-    - "Hello, {player}. Try to behave this time."
-    - "Oh look, it’s {player}."
-    - "Welcome, {player}. Let’s see how this goes."
+    - "{player}'s here, parties ruined"
+    - "{player} get a job you bum"
+    - "Oh great, it’s {player}."
+    - "yea, {player} is a little... Oh, hey. You're here"
+    - "It's called a job {player}"
 
   chat-lag:
-    - "Yes, {player}, the server is clearly responsible for everything."
-    - "Lag complaints detected. Morale unchanged."
-    - "The server heard 'lag' and became less interested."
-    - "If you say TPS confidently enough, maybe it helps."
+    - "{player} it's probably your mid *ss build"
+    - "Sounds like a you problem"
+    - "K y s {player}
 
   chat-brag:
-    - "We’re all very impressed, {player}. Allegedly."
-    - "Please, {player}, tell us more about your greatness."
-    - "Confidence noted. Evidence pending."
-    - "{player} has submitted another application for admiration."
+    - "Please, {player}, /suicide"
+    - "You're not him {player}"
+    - "{player} this is why your parents got divorced"
+    - "{player} your mom should've take you like a shot"
+    - "Your mom doesn't love you does she {player}?"
 
   chat-confusion:
-    - "An excellent mystery, {player}. Best of luck."
-    - "You could read the room, {player}. Or the signs."
-    - "Somewhere, the answer is already disappointed in you."
-    - "That does sound like a you problem, {player}."
+    - "{player} doesn't understand anything"
+    - "There's /kit guide for a reason, {player}"
+    - "This is why we all talk about you {player}"
+    - "Sounds like a you problem, {player}."
 
   chat-spam:
-    - "Rapid-fire nonsense detected from {player}."
-    - "Maybe put all of that into one message next time, {player}."
-    - "{player} appears to be communicating in bursts."
-    - "The server got the point three messages ago, {player}."
+    - "{player} please stfu"
+    - "Maybe at least say something interesting, {player}."
+    - "{player} no one cares"
+    - "We all talked, and, we all hate you {player}."
+    - "/suicide yourself or stop talking {player}"
 
   chat-celebration:
-    - "There it is, {player}. A rare moment of competence."
-    - "Congratulations, {player}. Try not to peak too early."
-    - "Enjoy the victory, {player}. It may not happen twice."
+    - "There it is, {player}. A rare moment of competence"
+    - "Congratulations, {player}. You might get a job some day"
+    - "Enjoy the victory, {player}. You're normally not the brightest"
     - "Remarkable. Something worked for {player}."
