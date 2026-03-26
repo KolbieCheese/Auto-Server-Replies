@@ -163,7 +163,7 @@ messages:
   chat-lag:
     - "{player} it's probably your mid *ss build"
     - "Sounds like a you problem"
-    - "K y s {player}
+    - "K y s {player}"
 
   chat-brag:
     - "Please, {player}, /suicide"

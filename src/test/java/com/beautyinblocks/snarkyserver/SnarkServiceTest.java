@@ -115,6 +115,31 @@ class SnarkServiceTest {
     }
 
     @Test
+    void testRepliesFallBackToBundledDefaultMessagesWhenLiveConfigIsEmpty() {
+        Server server = mockServer();
+        SnarkService service = new SnarkService(
+                new Random(0L),
+                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new SnarkFormatter("<white>[Server] <reset>"),
+                configWithMessages(List.of(), List.of()),
+                new DeathCategoryClassifier(),
+                new ChatCategoryClassifier(),
+                new ChatBurstTracker(),
+                new PlayerVisibilityChecker(server),
+                configWithMessages(
+                        List.of("Default death {player}"),
+                        List.of("Default chat {player}|{message}")
+                ).messages()
+        );
+
+        String rendered = PlainTextComponentSerializer.plainText().serialize(
+                service.buildTestChatReply("Kolbie", ChatCategory.GREETING, "hello there")
+        );
+
+        assertEquals("[Server] Default chat Kolbie|hello there", rendered);
+    }
+
+    @Test
     void hiddenChatPlayersDoNotTriggerAutomaticReplies() {
         Server server = mockServer();
         Player player = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174001"), GameMode.SPECTATOR);

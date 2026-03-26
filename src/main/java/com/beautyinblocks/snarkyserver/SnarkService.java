@@ -21,6 +21,7 @@ public final class SnarkService {
     private final ChatCategoryClassifier chatCategoryClassifier;
     private final ChatBurstTracker chatBurstTracker;
     private final PlayerVisibilityChecker playerVisibilityChecker;
+    private final SnarkyConfig.Messages testMessageFallbacks;
 
     public SnarkService(
             RandomGenerator random,
@@ -32,6 +33,30 @@ public final class SnarkService {
             ChatBurstTracker chatBurstTracker,
             PlayerVisibilityChecker playerVisibilityChecker
     ) {
+        this(
+                random,
+                cooldownManager,
+                formatter,
+                config,
+                deathCategoryClassifier,
+                chatCategoryClassifier,
+                chatBurstTracker,
+                playerVisibilityChecker,
+                config.messages()
+        );
+    }
+
+    public SnarkService(
+            RandomGenerator random,
+            CooldownManager cooldownManager,
+            SnarkFormatter formatter,
+            SnarkyConfig config,
+            DeathCategoryClassifier deathCategoryClassifier,
+            ChatCategoryClassifier chatCategoryClassifier,
+            ChatBurstTracker chatBurstTracker,
+            PlayerVisibilityChecker playerVisibilityChecker,
+            SnarkyConfig.Messages testMessageFallbacks
+    ) {
         this.random = random;
         this.cooldownManager = cooldownManager;
         this.formatter = formatter;
@@ -40,6 +65,7 @@ public final class SnarkService {
         this.chatCategoryClassifier = chatCategoryClassifier;
         this.chatBurstTracker = chatBurstTracker;
         this.playerVisibilityChecker = playerVisibilityChecker;
+        this.testMessageFallbacks = testMessageFallbacks;
     }
 
     public Component buildAutomaticDeathReply(Player player) {
@@ -76,11 +102,26 @@ public final class SnarkService {
     }
 
     public Component buildTestDeathReply(String playerName, DeathCategory category, String killerName) {
-        return buildDeathReply(null, safeName(playerName), category, killerName, FORCED_GATE);
+        return buildDeathReply(
+                null,
+                safeName(playerName),
+                category,
+                killerName,
+                FORCED_GATE,
+                testMessageFallbacks.deathMessagesFor(category)
+        );
     }
 
     public Component buildTestChatReply(String playerName, ChatCategory category, String messageText) {
-        return buildChatReply(null, safeName(playerName), category, normalize(messageText), FORCED_GATE, Instant.now());
+        return buildChatReply(
+                null,
+                safeName(playerName),
+                category,
+                normalize(messageText),
+                FORCED_GATE,
+                Instant.now(),
+                testMessageFallbacks.chatMessagesFor(category)
+        );
     }
 
     public Component buildRandomTestReply(String playerName) {
@@ -119,6 +160,17 @@ public final class SnarkService {
     }
 
     private Component buildDeathReply(Player player, String playerName, DeathCategory category, String killerName, ReplyGate gate) {
+        return buildDeathReply(player, playerName, category, killerName, gate, List.of());
+    }
+
+    private Component buildDeathReply(
+            Player player,
+            String playerName,
+            DeathCategory category,
+            String killerName,
+            ReplyGate gate,
+            List<String> fallbackMessages
+    ) {
         Instant now = Instant.now();
         if (!passesSharedChecks(player, gate, now, config.deathSnark().enabled())) {
             return null;
@@ -127,7 +179,7 @@ public final class SnarkService {
             return null;
         }
 
-        Component component = render(config.messages().deathMessagesFor(category), Map.of(
+        Component component = render(config.messages().deathMessagesFor(category), fallbackMessages, Map.of(
                 "player", playerName,
                 "killer", normalize(killerName),
                 "message", ""
@@ -146,6 +198,18 @@ public final class SnarkService {
             ReplyGate gate,
             Instant now
     ) {
+        return buildChatReply(player, playerName, category, messageText, gate, now, List.of());
+    }
+
+    private Component buildChatReply(
+            Player player,
+            String playerName,
+            ChatCategory category,
+            String messageText,
+            ReplyGate gate,
+            Instant now,
+            List<String> fallbackMessages
+    ) {
         if (!passesSharedChecks(player, gate, now, config.chatSnark().enabled())) {
             return null;
         }
@@ -153,7 +217,7 @@ public final class SnarkService {
             return null;
         }
 
-        Component component = render(config.messages().chatMessagesFor(category), Map.of(
+        Component component = render(config.messages().chatMessagesFor(category), fallbackMessages, Map.of(
                 "player", playerName,
                 "killer", "",
                 "message", messageText
@@ -195,10 +259,26 @@ public final class SnarkService {
     }
 
     private Component render(List<String> messages, Map<String, String> values) {
-        if (messages == null || messages.isEmpty()) {
+        return render(messages, List.of(), values);
+    }
+
+    private Component render(List<String> messages, List<String> fallbackMessages, Map<String, String> values) {
+        List<String> resolvedMessages = resolveMessages(messages, fallbackMessages);
+        if (resolvedMessages.isEmpty()) {
             return null;
         }
-        return formatter.format(messages.get(random.nextInt(messages.size())), values);
+
+        return formatter.format(resolvedMessages.get(random.nextInt(resolvedMessages.size())), values);
+    }
+
+    private List<String> resolveMessages(List<String> messages, List<String> fallbackMessages) {
+        if (messages != null && !messages.isEmpty()) {
+            return messages;
+        }
+        if (fallbackMessages != null && !fallbackMessages.isEmpty()) {
+            return fallbackMessages;
+        }
+        return List.of();
     }
 
     private String normalize(String input) {

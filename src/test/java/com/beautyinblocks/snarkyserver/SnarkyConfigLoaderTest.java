@@ -3,9 +3,14 @@ package com.beautyinblocks.snarkyserver;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class SnarkyConfigLoaderTest {
     @Test
@@ -41,5 +46,21 @@ class SnarkyConfigLoaderTest {
         assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.GENERIC));
         assertEquals(List.of(), config.messages().deathMessagesFor(DeathCategory.LAVA));
         assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.LAG));
+    }
+
+    @Test
+    void bundledConfigResourceLoadsDefaultMessagePools() throws Exception {
+        try (InputStream inputStream = SnarkyConfigLoaderTest.class.getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(inputStream);
+            YamlConfiguration configuration = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+            );
+
+            SnarkyConfig config = SnarkyConfigLoader.load(configuration);
+
+            assertFalse(config.messages().deathMessagesFor(DeathCategory.GENERIC).isEmpty());
+            assertFalse(config.messages().chatMessagesFor(ChatCategory.LAG).isEmpty());
+            assertEquals("K y s {player}", config.messages().chatMessagesFor(ChatCategory.LAG).get(2));
+        }
     }
 }

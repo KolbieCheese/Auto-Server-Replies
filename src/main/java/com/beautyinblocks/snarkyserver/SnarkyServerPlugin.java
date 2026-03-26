@@ -2,9 +2,12 @@ package com.beautyinblocks.snarkyserver;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
@@ -66,6 +69,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         DeathCategoryClassifier deathCategoryClassifier = new DeathCategoryClassifier();
         ChatCategoryClassifier chatCategoryClassifier = new ChatCategoryClassifier();
         PlayerVisibilityChecker playerVisibilityChecker = new PlayerVisibilityChecker(getServer());
+        SnarkyConfig.Messages testMessageFallbacks = loadBundledTestMessageFallbacks(config.messages());
         snarkService = new SnarkService(
                 ThreadLocalRandom.current(),
                 cooldownManager,
@@ -74,7 +78,8 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 deathCategoryClassifier,
                 chatCategoryClassifier,
                 chatBurstTracker,
-                playerVisibilityChecker
+                playerVisibilityChecker,
+                testMessageFallbacks
         );
 
         Bukkit.getPluginManager().registerEvents(
@@ -98,5 +103,28 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     public SnarkService getSnarkService() {
         return snarkService;
+    }
+
+    private SnarkyConfig.Messages loadBundledTestMessageFallbacks(SnarkyConfig.Messages liveMessages) {
+        try (Reader defaultConfigReader = getTextResource("config.yml")) {
+            if (defaultConfigReader == null) {
+                getLogger().warning("Bundled config.yml is missing; /snarktest will use only the live config message pools.");
+                return liveMessages;
+            }
+
+            SnarkyConfig.Messages bundledMessages = SnarkyConfigLoader
+                    .load(YamlConfiguration.loadConfiguration(defaultConfigReader))
+                    .messages();
+            if (bundledMessages.deathMessagesFor(DeathCategory.GENERIC).isEmpty()
+                    && bundledMessages.chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
+                getLogger().warning("Bundled config.yml did not provide default test message pools; /snarktest will use only the live config message pools.");
+                return liveMessages;
+            }
+
+            return bundledMessages;
+        } catch (IOException exception) {
+            getLogger().warning("Failed to read bundled config.yml for /snarktest defaults: " + exception.getMessage());
+            return liveMessages;
+        }
     }
 }
