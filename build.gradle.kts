@@ -6,7 +6,7 @@ import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
 
 group = "com.beautyinblocks"
-version = "1.0.0"
+version = providers.gradleProperty("version").get()
 
 repositories {
     mavenCentral()
