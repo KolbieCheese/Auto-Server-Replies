@@ -1,5 +1,5 @@
 name: SnarkyServer
-version: 1.0.0
+version: ${version}
 main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21.11'
 author: Beauty in Blocks

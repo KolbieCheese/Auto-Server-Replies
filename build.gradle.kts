@@ -33,6 +33,14 @@ tasks.jar {
     archiveClassifier.set("")
 }
 
+tasks.processResources {
+    inputs.property("version", project.version)
+
+    filesMatching("plugin.yml") {
+        expand("version" to project.version)
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
