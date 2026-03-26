@@ -7,10 +7,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SnarkyConfigLoaderTest {
     @Test
@@ -61,6 +64,40 @@ class SnarkyConfigLoaderTest {
             assertFalse(config.messages().deathMessagesFor(DeathCategory.GENERIC).isEmpty());
             assertFalse(config.messages().chatMessagesFor(ChatCategory.LAG).isEmpty());
             assertEquals("K y s {player}", config.messages().chatMessagesFor(ChatCategory.LAG).get(2));
+        }
+    }
+
+    @Test
+    void bundledConfigMessagesAreExportedAsSingleQuotedScalars() throws Exception {
+        try (InputStream inputStream = SnarkyConfigLoaderTest.class.getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(inputStream);
+            String configText = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            Matcher messagesSectionMatcher = Pattern.compile("(?ms)^messages:\\R(?<body>.*)$").matcher(configText);
+            assertTrue(messagesSectionMatcher.find(), "Expected a messages section in config.yml");
+
+            String messagesSection = messagesSectionMatcher.group("body");
+            Pattern messageLinePattern = Pattern.compile("(?m)^\\s*-\\s+(.+)$");
+            Matcher messageLineMatcher = messageLinePattern.matcher(messagesSection);
+
+            int messageCount = 0;
+            while (messageLineMatcher.find()) {
+                messageCount++;
+                String value = messageLineMatcher.group(1);
+                assertTrue(
+                        value.startsWith("'") && value.endsWith("'"),
+                        () -> "Expected single-quoted message scalar, but got: " + value
+                );
+            }
+
+            assertTrue(messageCount > 0, "Expected at least one messages.* list item");
+            assertTrue(
+                    configText.contains("'{killer}, {player} called you a little b*tch'"),
+                    "Expected placeholders in exported messages to remain unchanged"
+            );
+            assertTrue(
+                    configText.contains("'K y s {player}'"),
+                    "Expected {player} placeholder to remain unchanged"
+            );
         }
     }
 }
