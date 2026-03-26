@@ -61,4 +61,21 @@ class SnarkTestCommandTest {
         verify(sender).sendMessage(contains("Global cooldown"));
         verify(sender).sendMessage(contains("Kolbie cooldown"));
     }
+
+    @Test
+    void chatPreviewUsesBlankMessageWhenOmitted() {
+        Server server = mock(Server.class);
+        SnarkService service = mock(SnarkService.class);
+        CooldownManager cooldownManager = mock(CooldownManager.class);
+        CommandSender sender = mock(CommandSender.class);
+        Command command = mock(Command.class);
+        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager);
+        when(sender.hasPermission("snarkyserver.test")).thenReturn(true);
+        when(service.buildTestChatReply("Kolbie", ChatCategory.GREETING, "")).thenReturn(Component.text("[Server] preview"));
+
+        snarkTestCommand.onCommand(sender, command, "snarktest", new String[]{"chat", "greeting", "Kolbie"});
+
+        verify(service).buildTestChatReply("Kolbie", ChatCategory.GREETING, "");
+        verify(server).broadcast(any(Component.class));
+    }
 }

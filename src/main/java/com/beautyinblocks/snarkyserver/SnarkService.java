@@ -2,11 +2,11 @@ package com.beautyinblocks.snarkyserver;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public final class SnarkService {
@@ -17,30 +17,52 @@ public final class SnarkService {
     private final CooldownManager cooldownManager;
     private final SnarkFormatter formatter;
     private final SnarkyConfig config;
+    private final DeathCategoryClassifier deathCategoryClassifier;
     private final ChatCategoryClassifier chatCategoryClassifier;
     private final ChatBurstTracker chatBurstTracker;
+    private final PlayerVisibilityChecker playerVisibilityChecker;
 
     public SnarkService(
             RandomGenerator random,
             CooldownManager cooldownManager,
             SnarkFormatter formatter,
             SnarkyConfig config,
+            DeathCategoryClassifier deathCategoryClassifier,
             ChatCategoryClassifier chatCategoryClassifier,
-            ChatBurstTracker chatBurstTracker
+            ChatBurstTracker chatBurstTracker,
+            PlayerVisibilityChecker playerVisibilityChecker
     ) {
         this.random = random;
         this.cooldownManager = cooldownManager;
         this.formatter = formatter;
         this.config = config;
+        this.deathCategoryClassifier = deathCategoryClassifier;
         this.chatCategoryClassifier = chatCategoryClassifier;
         this.chatBurstTracker = chatBurstTracker;
+        this.playerVisibilityChecker = playerVisibilityChecker;
     }
 
-    public Component buildAutomaticDeathReply(Player player, DeathCategory category, String killerName) {
+    public Component buildAutomaticDeathReply(Player player) {
+        if (playerVisibilityChecker.isHidden(player)) {
+            return null;
+        }
+
+        Player killer = player.getKiller();
+        boolean shouldExposeKiller = killer != null && !playerVisibilityChecker.isHidden(killer);
+        EntityDamageEvent lastDamageCause = player.getLastDamageCause();
+        DeathCategory category = deathCategoryClassifier.classify(
+                shouldExposeKiller,
+                lastDamageCause == null ? null : lastDamageCause.getCause()
+        );
+        String killerName = shouldExposeKiller ? killer.getName() : "";
         return buildDeathReply(player, player.getName(), category, killerName, AUTOMATIC_GATE);
     }
 
     public Component buildAutomaticChatReply(Player player, String messageText) {
+        if (playerVisibilityChecker.isHidden(player)) {
+            return null;
+        }
+
         String normalized = normalize(messageText);
         Instant now = Instant.now();
         boolean spamBurstTriggered = chatBurstTracker.recordAndCheck(
@@ -58,21 +80,18 @@ public final class SnarkService {
     }
 
     public Component buildTestChatReply(String playerName, ChatCategory category, String messageText) {
-        String normalized = normalize(messageText);
-        String resolvedMessage = normalized.isBlank() ? category.defaultTestMessage() : normalized;
-        return buildChatReply(null, safeName(playerName), category, resolvedMessage, FORCED_GATE, Instant.now());
+        return buildChatReply(null, safeName(playerName), category, normalize(messageText), FORCED_GATE, Instant.now());
     }
 
     public Component buildRandomTestReply(String playerName) {
         String resolvedPlayer = safeName(playerName);
         if (random.nextBoolean()) {
             DeathCategory category = DeathCategory.values()[random.nextInt(DeathCategory.values().length)];
-            String killerName = category == DeathCategory.PVP ? "someone" : "";
-            return buildTestDeathReply(resolvedPlayer, category, killerName);
+            return buildTestDeathReply(resolvedPlayer, category, "");
         }
 
         ChatCategory category = ChatCategory.values()[random.nextInt(ChatCategory.values().length)];
-        return buildTestChatReply(resolvedPlayer, category, category.defaultTestMessage());
+        return buildTestChatReply(resolvedPlayer, category, "");
     }
 
     public boolean isChatEnabled() {
@@ -110,7 +129,7 @@ public final class SnarkService {
 
         Component component = render(config.messages().deathMessagesFor(category), Map.of(
                 "player", playerName,
-                "killer", safeNameOrFallback(killerName, "someone"),
+                "killer", normalize(killerName),
                 "message", ""
         ));
         if (component != null && gate.checkCooldowns() && player != null) {

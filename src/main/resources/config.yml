@@ -54,6 +54,16 @@ filters:
     - "?"
 
 messages:
+  # How to write custom messages:
+  # - Each list item is one possible reply; Snarky picks one at random.
+  # - Missing category lists fall back to death-generic or chat-generic.
+  # - If a generic list is empty too, Snarky has nothing to send for that reply family.
+  # - Placeholders are optional and can be used in any message.
+  # - {player} = the triggering player's name.
+  # - {message} = the original chat message for chat replies, otherwise blank.
+  # - {killer} = the killer's name for visible PVP deaths, otherwise blank.
+  # - MiniMessage formatting is supported in any message.
+  # - Quote messages when YAML punctuation like :, ?, #, or leading/trailing spaces could be misread.
   death-generic:
     - "{player} really committed to that mistake."
     - "That looked intentional, {player}."

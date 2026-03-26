@@ -59,24 +59,37 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         HandlerList.unregisterAll(this);
 
         SnarkyConfig config = SnarkyConfigLoader.load(getConfig());
+        logMissingGenericMessageWarnings(config);
         cooldownManager = new CooldownManager(config.cooldowns());
         chatBurstTracker = new ChatBurstTracker();
         SnarkFormatter formatter = new SnarkFormatter(config.prefix());
         DeathCategoryClassifier deathCategoryClassifier = new DeathCategoryClassifier();
         ChatCategoryClassifier chatCategoryClassifier = new ChatCategoryClassifier();
+        PlayerVisibilityChecker playerVisibilityChecker = new PlayerVisibilityChecker(getServer());
         snarkService = new SnarkService(
                 ThreadLocalRandom.current(),
                 cooldownManager,
                 formatter,
                 config,
+                deathCategoryClassifier,
                 chatCategoryClassifier,
-                chatBurstTracker
+                chatBurstTracker,
+                playerVisibilityChecker
         );
 
         Bukkit.getPluginManager().registerEvents(
-                new SnarkListener(this, snarkService, deathCategoryClassifier),
+                new SnarkListener(this, snarkService),
                 this
         );
+    }
+
+    private void logMissingGenericMessageWarnings(SnarkyConfig config) {
+        if (config.messages().deathMessagesFor(DeathCategory.GENERIC).isEmpty()) {
+            getLogger().warning("messages.death-generic is empty; automatic death replies without category-specific entries will be skipped.");
+        }
+        if (config.messages().chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
+            getLogger().warning("messages.chat-generic is empty; automatic chat replies without category-specific entries will be skipped.");
+        }
     }
 
     public CooldownManager getCooldownManager() {

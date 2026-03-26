@@ -112,7 +112,7 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
         }
 
         String playerName = args[2];
-        String killerName = args.length >= 4 ? args[3] : (category == DeathCategory.PVP ? "someone" : "");
+        String killerName = args.length >= 4 ? args[3] : "";
         return broadcastPreview(sender, snarkServiceSupplier.get().buildTestDeathReply(playerName, category, killerName));
     }
 
@@ -131,7 +131,7 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
         String playerName = args[2];
         String message = args.length >= 4
                 ? String.join(" ", Arrays.copyOfRange(args, 3, args.length))
-                : category.defaultTestMessage();
+                : "";
         return broadcastPreview(sender, snarkServiceSupplier.get().buildTestChatReply(playerName, category, message));
     }
 

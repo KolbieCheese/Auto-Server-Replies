@@ -30,4 +30,16 @@ class SnarkyConfigLoaderTest {
         assertEquals(8, config.chatSnark().spamBurst().windowSeconds());
         assertEquals(12, config.chatSnark().spamBurst().maxMessageLength());
     }
+
+    @Test
+    void leavesGenericMessagePoolsEmptyWhenMissing() {
+        YamlConfiguration configuration = new YamlConfiguration();
+
+        SnarkyConfig config = SnarkyConfigLoader.load(configuration);
+
+        assertEquals(List.of(), config.messages().deathMessagesFor(DeathCategory.GENERIC));
+        assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.GENERIC));
+        assertEquals(List.of(), config.messages().deathMessagesFor(DeathCategory.LAVA));
+        assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.LAG));
+    }
 }

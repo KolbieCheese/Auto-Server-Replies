@@ -82,8 +82,7 @@ public final class SnarkyConfigLoader {
         List<String> generic = listOrFallback(
                 configuration,
                 DeathCategory.GENERIC.messagePath(),
-                null,
-                "{player} really committed to that mistake."
+                null
         );
         messages.put(DeathCategory.GENERIC, generic);
 
@@ -91,7 +90,7 @@ public final class SnarkyConfigLoader {
             if (category == DeathCategory.GENERIC) {
                 continue;
             }
-            messages.put(category, listOrFallback(configuration, category.messagePath(), DeathCategory.GENERIC.messagePath(), generic.get(0)));
+            messages.put(category, listOrFallback(configuration, category.messagePath(), DeathCategory.GENERIC.messagePath()));
         }
 
         return messages;
@@ -102,8 +101,7 @@ public final class SnarkyConfigLoader {
         List<String> generic = listOrFallback(
                 configuration,
                 ChatCategory.GENERIC.messagePath(),
-                null,
-                "That sounded better in your head, {player}."
+                null
         );
         messages.put(ChatCategory.GENERIC, generic);
 
@@ -111,7 +109,7 @@ public final class SnarkyConfigLoader {
             if (category == ChatCategory.GENERIC) {
                 continue;
             }
-            messages.put(category, listOrFallback(configuration, category.messagePath(), ChatCategory.GENERIC.messagePath(), generic.get(0)));
+            messages.put(category, listOrFallback(configuration, category.messagePath(), ChatCategory.GENERIC.messagePath()));
         }
 
         return messages;
@@ -141,8 +139,7 @@ public final class SnarkyConfigLoader {
     private static List<String> listOrFallback(
             FileConfiguration configuration,
             String path,
-            String fallbackPath,
-            String hardcodedFallback
+            String fallbackPath
     ) {
         List<String> primary = configuration.getStringList(path);
         if (!primary.isEmpty()) {
@@ -156,6 +153,6 @@ public final class SnarkyConfigLoader {
             }
         }
 
-        return List.of(hardcodedFallback);
+        return List.of();
     }
 }
