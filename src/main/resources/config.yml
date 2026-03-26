@@ -24,13 +24,13 @@ chat-snark:
   enabled: true
   # Per-category chances from 0.0 to 1.0.
   chances:
-    generic: 0.10
-    question: 0.05
-    excited: 0.05
-    greeting: 0.05
-    lag: 0.05
-    brag: 0.05
-    confusion: 0.05
+    generic: 0.20
+    question: 0.15
+    excited: 0.60
+    greeting: 0.25
+    lag: 0.10
+    brag: 0.30
+    confusion: 0.10
     spam: 0.30
     celebration: 0.10
   # Legacy fallback for older configs.
@@ -74,6 +74,7 @@ messages:
   death-lava:
     - "{player} didn't feel good did it?"
     - "{player} you would be this dumb"
+    - "This is why your dad left {player}"
 
   death-fall:
     - "{player} don't do that"
@@ -86,11 +87,13 @@ messages:
     - "{killer}, {player} called you a little b*tch"
     - "This is why everyone hates you {killer}"
     - "You've gotta click to hit them back dumb*ss"
+    - "You're both b*tches, {player} & {killer}"
+    - "Your mom drank while she was pregnant huh, {player}"
+    - "{killer} did what your parents never had the courage to do"
 
   death-drowning:
-    - "{player} forgot how breathing works."
-    - "Water: 1, {player}: 0."
-    - "{player} should’ve come up for air."
+    - "{player} don't swallow the water you f*ckin dumb*ss"
+    - "Literally just swim up {player}"
 
   death-fire:
     - "{player} stop, drop, and roll idiot"
@@ -140,26 +143,34 @@ messages:
     - "Have you tried figuring it out, {player}?"
     - "You always ask the dumbest sh*t"
     - "School's not for everyone ig"
+    - "stfu"
+    - "Nobody cares {player}"
 
   chat-excited:
     - "Calm down, {player}. It’s not that serious"
     - "We get it, {player}, now get a job"
     - "No one cares"
     - "Keep it to yourself {player}"
+    - "Stfu"
 
   chat-greeting:
     - "{player}'s here, parties ruined"
     - "{player} get a job you bum"
     - "Oh great, it’s {player}."
+    - "yea, {player} is a little... Oh, hey. You're here"
+    - "It's called a job {player}"
 
   chat-lag:
     - "{player} it's probably your mid *ss build"
     - "Sounds like a you problem"
+    - "K y s {player}
 
   chat-brag:
     - "Please, {player}, /suicide"
     - "You're not him {player}"
     - "{player} this is why your parents got divorced"
+    - "{player} your mom should've take you like a shot"
+    - "Your mom doesn't love you does she {player}?"
 
   chat-confusion:
     - "{player} doesn't understand anything"
@@ -172,6 +183,7 @@ messages:
     - "Maybe at least say something interesting, {player}."
     - "{player} no one cares"
     - "We all talked, and, we all hate you {player}."
+    - "/suicide yourself or stop talking {player}"
 
   chat-celebration:
     - "There it is, {player}. A rare moment of competence"
