@@ -61,13 +61,13 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
         SnarkyConfig config = SnarkyConfigLoader.load(getConfig());
         logMissingGenericMessageWarnings(config);
-        cooldownManager = new CooldownManager(config.cooldowns());
+        cooldownManager = new CooldownManager(config.triggersConfig().cooldowns());
         chatBurstTracker = new ChatBurstTracker();
         SnarkFormatter formatter = new SnarkFormatter(config.prefix());
         DeathCategoryClassifier deathCategoryClassifier = new DeathCategoryClassifier();
         ChatCategoryClassifier chatCategoryClassifier = new ChatCategoryClassifier();
         PlayerVisibilityChecker playerVisibilityChecker = new PlayerVisibilityChecker(getServer());
-        SnarkyConfig.Messages testMessageFallbacks = loadBundledTestMessageFallbacks(config.messages());
+        SnarkMessagesConfig testMessageFallbacks = loadBundledTestMessageFallbacks(config.messagesConfig());
         snarkService = new SnarkService(
                 ThreadLocalRandom.current(),
                 cooldownManager,
@@ -87,10 +87,10 @@ public final class SnarkyServerPlugin extends JavaPlugin {
     }
 
     private void logMissingGenericMessageWarnings(SnarkyConfig config) {
-        if (config.messages().deathMessagesFor(DeathCategory.GENERIC).isEmpty()) {
+        if (config.messagesConfig().deathMessagesFor(DeathCategory.GENERIC).isEmpty()) {
             getLogger().warning("messages.death-generic is empty; automatic death replies without category-specific entries will be skipped.");
         }
-        if (config.messages().chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
+        if (config.messagesConfig().chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
             getLogger().warning("messages.chat-generic is empty; automatic chat replies without category-specific entries will be skipped.");
         }
     }
@@ -103,16 +103,16 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         return snarkService;
     }
 
-    private SnarkyConfig.Messages loadBundledTestMessageFallbacks(SnarkyConfig.Messages liveMessages) {
+    private SnarkMessagesConfig loadBundledTestMessageFallbacks(SnarkMessagesConfig liveMessages) {
         try (Reader defaultConfigReader = getTextResource("config.yml")) {
             if (defaultConfigReader == null) {
                 getLogger().warning("Bundled config.yml is missing; /snarktest will use only the live config message pools.");
                 return liveMessages;
             }
 
-            SnarkyConfig.Messages bundledMessages = SnarkyConfigLoader
+            SnarkMessagesConfig bundledMessages = SnarkyConfigLoader
                     .load(YamlConfiguration.loadConfiguration(defaultConfigReader))
-                    .messages();
+                    .messagesConfig();
             if (bundledMessages.deathMessagesFor(DeathCategory.GENERIC).isEmpty()
                     && bundledMessages.chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
                 getLogger().warning("Bundled config.yml did not provide default test message pools; /snarktest will use only the live config message pools.");

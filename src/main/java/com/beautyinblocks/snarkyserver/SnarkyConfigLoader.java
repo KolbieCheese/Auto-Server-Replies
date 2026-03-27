@@ -28,35 +28,39 @@ public final class SnarkyConfigLoader {
         );
 
         return new SnarkyConfig(
-                configuration.getBoolean("enabled", true),
                 configuration.getString("prefix", ""),
-                new SnarkyConfig.DeathSnark(
-                        configuration.getBoolean("death-snark.enabled", true),
-                        loadDeathChances(configuration, deathGenericChance)
-                ),
-                new SnarkyConfig.ChatSnark(
-                        configuration.getBoolean("chat-snark.enabled", true),
-                        loadChatChances(configuration, chatGenericChance),
-                        configuration.getInt("chat-snark.min-message-length", 6),
-                        configuration.getBoolean("chat-snark.ignore-commands", true),
-                        new SnarkyConfig.ChatSnark.SpamBurst(
-                                configuration.getInt("chat-snark.spam-burst.threshold", 3),
-                                configuration.getInt("chat-snark.spam-burst.window-seconds", 8),
-                                configuration.getInt("chat-snark.spam-burst.max-message-length", 12)
-                        )
-                ),
-                new SnarkyConfig.Cooldowns(
-                        configuration.getInt("cooldowns.per-player-seconds", 120),
-                        configuration.getInt("cooldowns.global-seconds", 20)
-                ),
-                new SnarkyConfig.Filters(
-                        configuration.getString("filters.bypass-permission", "snarkyserver.bypass"),
-                        configuration.getStringList("filters.ignored-worlds"),
-                        configuration.getStringList("filters.ignored-prefixes")
-                ),
-                new SnarkyConfig.Messages(
+                new SnarkMessagesConfig(
                         loadDeathMessages(configuration),
                         loadChatMessages(configuration)
+                ),
+                new SnarkChancesConfig(
+                        loadDeathChances(configuration, deathGenericChance),
+                        loadChatChances(configuration, chatGenericChance)
+                ),
+                new SnarkTriggersConfig(
+                        configuration.getBoolean("enabled", true),
+                        new SnarkTriggersConfig.DeathSnark(
+                                configuration.getBoolean("death-snark.enabled", true)
+                        ),
+                        new SnarkTriggersConfig.ChatSnark(
+                                configuration.getBoolean("chat-snark.enabled", true),
+                                configuration.getInt("chat-snark.min-message-length", 6),
+                                configuration.getBoolean("chat-snark.ignore-commands", true),
+                                new SnarkTriggersConfig.ChatSnark.SpamBurst(
+                                        configuration.getInt("chat-snark.spam-burst.threshold", 3),
+                                        configuration.getInt("chat-snark.spam-burst.window-seconds", 8),
+                                        configuration.getInt("chat-snark.spam-burst.max-message-length", 12)
+                                )
+                        ),
+                        new SnarkTriggersConfig.Cooldowns(
+                                configuration.getInt("cooldowns.per-player-seconds", 120),
+                                configuration.getInt("cooldowns.global-seconds", 20)
+                        ),
+                        new SnarkTriggersConfig.Filters(
+                                configuration.getString("filters.bypass-permission", "snarkyserver.bypass"),
+                                configuration.getStringList("filters.ignored-worlds"),
+                                configuration.getStringList("filters.ignored-prefixes")
+                        )
                 )
         );
     }

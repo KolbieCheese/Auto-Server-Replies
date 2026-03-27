@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ChatBurstTracker {
     private final Map<UUID, Deque<Instant>> shortMessageBursts = new ConcurrentHashMap<>();
 
-    public boolean recordAndCheck(UUID playerId, String message, Instant now, SnarkyConfig.ChatSnark.SpamBurst spamBurst) {
+    public boolean recordAndCheck(UUID playerId, String message, Instant now, SnarkTriggersConfig.ChatSnark.SpamBurst spamBurst) {
         int maxMessageLength = Math.max(1, spamBurst.maxMessageLength());
         int threshold = Math.max(2, spamBurst.threshold());
         int windowSeconds = Math.max(1, spamBurst.windowSeconds());

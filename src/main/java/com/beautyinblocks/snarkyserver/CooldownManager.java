@@ -13,7 +13,7 @@ public final class CooldownManager {
     private final Map<UUID, Instant> lastResponseByPlayer = new ConcurrentHashMap<>();
     private final AtomicReference<Instant> globalLastResponse = new AtomicReference<>(Instant.EPOCH);
 
-    public CooldownManager(SnarkyConfig.Cooldowns cooldowns) {
+    public CooldownManager(SnarkTriggersConfig.Cooldowns cooldowns) {
         this.perPlayerDuration = Duration.ofSeconds(Math.max(0, cooldowns.perPlayerSeconds()));
         this.globalDuration = Duration.ofSeconds(Math.max(0, cooldowns.globalSeconds()));
     }
