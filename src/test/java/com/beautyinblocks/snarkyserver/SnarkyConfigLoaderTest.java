@@ -30,16 +30,19 @@ class SnarkyConfigLoaderTest {
         messagesConfiguration.set("messages.chat-generic", List.of("generic chat"));
 
         SnarkyConfig config = SnarkyConfigLoader.load(messagesConfiguration, chancesConfiguration, triggersConfiguration);
+        SnarkChancesConfig chancesConfig = config.chancesConfig();
+        SnarkMessagesConfig messagesConfig = config.messagesConfig();
+        SnarkTriggersConfig triggersConfig = config.triggersConfig();
 
-        assertEquals(0.35D, config.chancesConfig().deathChanceFor(DeathCategory.FIRE));
-        assertEquals(0.75D, config.chancesConfig().deathChanceFor(DeathCategory.LAVA));
-        assertEquals(0.15D, config.chancesConfig().chatChanceFor(ChatCategory.CELEBRATION));
-        assertEquals(0.45D, config.chancesConfig().chatChanceFor(ChatCategory.QUESTION));
-        assertEquals(List.of("generic death"), config.messagesConfig().deathMessagesFor(DeathCategory.EXPLOSION));
-        assertEquals(List.of("generic chat"), config.messagesConfig().chatMessagesFor(ChatCategory.LAG));
-        assertEquals(3, config.triggersConfig().chatSnark().spamBurst().threshold());
-        assertEquals(8, config.triggersConfig().chatSnark().spamBurst().windowSeconds());
-        assertEquals(12, config.triggersConfig().chatSnark().spamBurst().maxMessageLength());
+        assertEquals(0.35D, chancesConfig.deathChanceFor(DeathCategory.FIRE));
+        assertEquals(0.75D, chancesConfig.deathChanceFor(DeathCategory.LAVA));
+        assertEquals(0.15D, chancesConfig.chatChanceFor(ChatCategory.CELEBRATION));
+        assertEquals(0.45D, chancesConfig.chatChanceFor(ChatCategory.QUESTION));
+        assertEquals(List.of("generic death"), messagesConfig.deathMessagesFor(DeathCategory.EXPLOSION));
+        assertEquals(List.of("generic chat"), messagesConfig.chatMessagesFor(ChatCategory.LAG));
+        assertEquals(3, triggersConfig.chatSnark().spamBurst().threshold());
+        assertEquals(8, triggersConfig.chatSnark().spamBurst().windowSeconds());
+        assertEquals(12, triggersConfig.chatSnark().spamBurst().maxMessageLength());
     }
 
     @Test
