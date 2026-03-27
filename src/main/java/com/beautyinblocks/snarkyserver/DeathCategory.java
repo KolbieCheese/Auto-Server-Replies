@@ -28,12 +28,12 @@ public enum DeathCategory {
         return configKey;
     }
 
-    public String messagePath() {
-        return "messages.death-" + configKey;
+    public String messageKey() {
+        return "death-" + configKey;
     }
 
-    public String chancePath() {
-        return "death-snark.chances." + configKey;
+    public String chanceKey() {
+        return configKey;
     }
 
     public static Optional<DeathCategory> fromKey(String input) {

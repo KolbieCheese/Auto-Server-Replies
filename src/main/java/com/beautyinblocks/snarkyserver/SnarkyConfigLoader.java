@@ -9,6 +9,9 @@ import java.util.Map;
 public final class SnarkyConfigLoader {
     private static final double DEFAULT_DEATH_CHANCE = 0.20D;
     private static final double DEFAULT_CHAT_CHANCE = 0.05D;
+    private static final String MESSAGE_ROOT_PATH = "messages";
+    private static final String DEATH_CHANCES_ROOT_PATH = "death-snark.chances";
+    private static final String CHAT_CHANCES_ROOT_PATH = "chat-snark.chances";
 
     private SnarkyConfigLoader() {
     }
@@ -16,13 +19,13 @@ public final class SnarkyConfigLoader {
     public static SnarkyConfig load(FileConfiguration configuration) {
         double deathGenericChance = getChance(
                 configuration,
-                DeathCategory.GENERIC.chancePath(),
+                deathChancePath(DeathCategory.GENERIC),
                 "death-snark.chance",
                 DEFAULT_DEATH_CHANCE
         );
         double chatGenericChance = getChance(
                 configuration,
-                ChatCategory.GENERIC.chancePath(),
+                chatChancePath(ChatCategory.GENERIC),
                 "chat-snark.chance",
                 DEFAULT_CHAT_CHANCE
         );
@@ -68,7 +71,7 @@ public final class SnarkyConfigLoader {
     private static Map<DeathCategory, Double> loadDeathChances(FileConfiguration configuration, double defaultChance) {
         EnumMap<DeathCategory, Double> chances = new EnumMap<>(DeathCategory.class);
         for (DeathCategory category : DeathCategory.values()) {
-            chances.put(category, getChance(configuration, category.chancePath(), defaultChance));
+            chances.put(category, getChance(configuration, deathChancePath(category), defaultChance));
         }
         return chances;
     }
@@ -76,7 +79,7 @@ public final class SnarkyConfigLoader {
     private static Map<ChatCategory, Double> loadChatChances(FileConfiguration configuration, double defaultChance) {
         EnumMap<ChatCategory, Double> chances = new EnumMap<>(ChatCategory.class);
         for (ChatCategory category : ChatCategory.values()) {
-            chances.put(category, getChance(configuration, category.chancePath(), defaultChance));
+            chances.put(category, getChance(configuration, chatChancePath(category), defaultChance));
         }
         return chances;
     }
@@ -85,7 +88,7 @@ public final class SnarkyConfigLoader {
         EnumMap<DeathCategory, List<String>> messages = new EnumMap<>(DeathCategory.class);
         List<String> generic = listOrFallback(
                 configuration,
-                DeathCategory.GENERIC.messagePath(),
+                deathMessagePath(DeathCategory.GENERIC),
                 null
         );
         messages.put(DeathCategory.GENERIC, generic);
@@ -94,7 +97,14 @@ public final class SnarkyConfigLoader {
             if (category == DeathCategory.GENERIC) {
                 continue;
             }
-            messages.put(category, listOrFallback(configuration, category.messagePath(), DeathCategory.GENERIC.messagePath()));
+            messages.put(
+                    category,
+                    listOrFallback(
+                            configuration,
+                            deathMessagePath(category),
+                            deathMessagePath(DeathCategory.GENERIC)
+                    )
+            );
         }
 
         return messages;
@@ -104,7 +114,7 @@ public final class SnarkyConfigLoader {
         EnumMap<ChatCategory, List<String>> messages = new EnumMap<>(ChatCategory.class);
         List<String> generic = listOrFallback(
                 configuration,
-                ChatCategory.GENERIC.messagePath(),
+                chatMessagePath(ChatCategory.GENERIC),
                 null
         );
         messages.put(ChatCategory.GENERIC, generic);
@@ -113,10 +123,33 @@ public final class SnarkyConfigLoader {
             if (category == ChatCategory.GENERIC) {
                 continue;
             }
-            messages.put(category, listOrFallback(configuration, category.messagePath(), ChatCategory.GENERIC.messagePath()));
+            messages.put(
+                    category,
+                    listOrFallback(
+                            configuration,
+                            chatMessagePath(category),
+                            chatMessagePath(ChatCategory.GENERIC)
+                    )
+            );
         }
 
         return messages;
+    }
+
+    private static String deathMessagePath(DeathCategory category) {
+        return MESSAGE_ROOT_PATH + "." + category.messageKey();
+    }
+
+    private static String chatMessagePath(ChatCategory category) {
+        return MESSAGE_ROOT_PATH + "." + category.messageKey();
+    }
+
+    private static String deathChancePath(DeathCategory category) {
+        return DEATH_CHANCES_ROOT_PATH + "." + category.chanceKey();
+    }
+
+    private static String chatChancePath(ChatCategory category) {
+        return CHAT_CHANCES_ROOT_PATH + "." + category.chanceKey();
     }
 
     private static double getChance(FileConfiguration configuration, String path, double fallback) {

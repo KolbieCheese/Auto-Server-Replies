@@ -25,12 +25,12 @@ public enum ChatCategory {
         return configKey;
     }
 
-    public String messagePath() {
-        return "messages.chat-" + configKey;
+    public String messageKey() {
+        return "chat-" + configKey;
     }
 
-    public String chancePath() {
-        return "chat-snark.chances." + configKey;
+    public String chanceKey() {
+        return configKey;
     }
 
     public static Optional<ChatCategory> fromKey(String input) {
