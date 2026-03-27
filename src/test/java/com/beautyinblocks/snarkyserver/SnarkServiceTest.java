@@ -29,7 +29,7 @@ class SnarkServiceTest {
         Server server = mockServer();
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 TestSnarkConfigs.simpleConfig(false, false, false, 60, 20, 1.0D, 1.0D),
                 new DeathCategoryClassifier(),
@@ -50,7 +50,7 @@ class SnarkServiceTest {
         Server server = mockServer();
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(120, 0)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(120, 0)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 TestSnarkConfigs.simpleConfig(true, true, true, 120, 0, 1.0D, 1.0D),
                 new DeathCategoryClassifier(),
@@ -74,7 +74,7 @@ class SnarkServiceTest {
         Server server = mockServer();
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 configWithMessages(
                         List.of("Death {player}|{killer}|{message}"),
@@ -98,7 +98,7 @@ class SnarkServiceTest {
         Server server = mockServer();
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 configWithMessages(List.of("Just a death line."), List.of("Just a chat line.")),
                 new DeathCategoryClassifier(),
@@ -119,7 +119,7 @@ class SnarkServiceTest {
         Server server = mockServer();
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 configWithMessages(List.of(), List.of()),
                 new DeathCategoryClassifier(),
@@ -129,7 +129,7 @@ class SnarkServiceTest {
                 configWithMessages(
                         List.of("Default death {player}"),
                         List.of("Default chat {player}|{message}")
-                ).messages()
+                ).messagesConfig()
         );
 
         String rendered = PlainTextComponentSerializer.plainText().serialize(
@@ -147,7 +147,7 @@ class SnarkServiceTest {
 
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D),
                 new DeathCategoryClassifier(),
@@ -167,7 +167,7 @@ class SnarkServiceTest {
 
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D),
                 new DeathCategoryClassifier(),
@@ -196,7 +196,7 @@ class SnarkServiceTest {
 
         SnarkService service = new SnarkService(
                 new Random(0L),
-                new CooldownManager(new SnarkyConfig.Cooldowns(60, 20)),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
                 new SnarkFormatter("<white>[Server] <reset>"),
                 deathCategoryConfig("Generic {killer}", "Pvp {killer}"),
                 new DeathCategoryClassifier(),
@@ -244,36 +244,39 @@ class SnarkServiceTest {
             chatMessages.put(category, chatGeneric);
         }
 
-        return new SnarkyConfig(
+        SnarkMessagesConfig messagesConfig = new SnarkMessagesConfig(deathMessages, chatMessages);
+        SnarkChancesConfig chancesConfig = new SnarkChancesConfig(deathChances, chatChances);
+        SnarkTriggersConfig triggersConfig = new SnarkTriggersConfig(
                 true,
-                "<white>[Server] <reset>",
-                new SnarkyConfig.DeathSnark(true, deathChances),
-                new SnarkyConfig.ChatSnark(
+                new SnarkTriggersConfig.DeathSnark(true),
+                new SnarkTriggersConfig.ChatSnark(
                         true,
-                        chatChances,
                         1,
                         false,
-                        new SnarkyConfig.ChatSnark.SpamBurst(3, 8, 12)
+                        new SnarkTriggersConfig.ChatSnark.SpamBurst(3, 8, 12)
                 ),
-                new SnarkyConfig.Cooldowns(60, 20),
-                new SnarkyConfig.Filters("snarkyserver.bypass", List.of(), List.of()),
-                new SnarkyConfig.Messages(deathMessages, chatMessages)
+                new SnarkTriggersConfig.Cooldowns(60, 20),
+                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of())
+        );
+
+        return new SnarkyConfig(
+                "<white>[Server] <reset>",
+                messagesConfig,
+                chancesConfig,
+                triggersConfig
         );
     }
 
     private SnarkyConfig deathCategoryConfig(String genericDeath, String pvpDeath) {
         SnarkyConfig config = configWithMessages(List.of(genericDeath), List.of("Chat"));
-        EnumMap<DeathCategory, List<String>> deathMessages = new EnumMap<>(config.messages().deathMessages());
+        EnumMap<DeathCategory, List<String>> deathMessages = new EnumMap<>(config.messagesConfig().deathMessages());
         deathMessages.put(DeathCategory.GENERIC, List.of(genericDeath));
         deathMessages.put(DeathCategory.PVP, List.of(pvpDeath));
         return new SnarkyConfig(
-                config.enabled(),
                 config.prefix(),
-                config.deathSnark(),
-                config.chatSnark(),
-                config.cooldowns(),
-                config.filters(),
-                new SnarkyConfig.Messages(deathMessages, config.messages().chatMessages())
+                new SnarkMessagesConfig(deathMessages, config.messagesConfig().chatMessages()),
+                config.chancesConfig(),
+                config.triggersConfig()
         );
     }
 }
