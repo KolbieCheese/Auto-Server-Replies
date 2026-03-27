@@ -17,58 +17,61 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SnarkyConfigLoaderTest {
     @Test
-    void loadsLegacyFallbacksAndCategoryMaps() {
-        YamlConfiguration configuration = new YamlConfiguration();
-        configuration.set("death-snark.chance", 0.35D);
-        configuration.set("death-snark.chances.lava", 0.75D);
-        configuration.set("chat-snark.chance", 0.15D);
-        configuration.set("chat-snark.chances.question", 0.45D);
-        configuration.set("messages.death-generic", List.of("generic death"));
-        configuration.set("messages.chat-generic", List.of("generic chat"));
+    void loadsSplitFilesWithLegacyChanceFallbacksAndCategoryMaps() {
+        YamlConfiguration messagesConfiguration = new YamlConfiguration();
+        YamlConfiguration chancesConfiguration = new YamlConfiguration();
+        YamlConfiguration triggersConfiguration = new YamlConfiguration();
 
-        SnarkyConfig config = SnarkyConfigLoader.load(configuration);
+        chancesConfiguration.set("death-snark.chance", 0.35D);
+        chancesConfiguration.set("death-snark.chances.lava", 0.75D);
+        chancesConfiguration.set("chat-snark.chance", 0.15D);
+        chancesConfiguration.set("chat-snark.chances.question", 0.45D);
+        messagesConfiguration.set("messages.death-generic", List.of("generic death"));
+        messagesConfiguration.set("messages.chat-generic", List.of("generic chat"));
 
-        assertEquals(0.35D, config.deathSnark().chanceFor(DeathCategory.FIRE));
-        assertEquals(0.75D, config.deathSnark().chanceFor(DeathCategory.LAVA));
-        assertEquals(0.15D, config.chatSnark().chanceFor(ChatCategory.CELEBRATION));
-        assertEquals(0.45D, config.chatSnark().chanceFor(ChatCategory.QUESTION));
-        assertEquals(List.of("generic death"), config.messages().deathMessagesFor(DeathCategory.EXPLOSION));
-        assertEquals(List.of("generic chat"), config.messages().chatMessagesFor(ChatCategory.LAG));
-        assertEquals(3, config.chatSnark().spamBurst().threshold());
-        assertEquals(8, config.chatSnark().spamBurst().windowSeconds());
-        assertEquals(12, config.chatSnark().spamBurst().maxMessageLength());
+        SnarkyConfig config = SnarkyConfigLoader.load(messagesConfiguration, chancesConfiguration, triggersConfiguration);
+
+        assertEquals(0.35D, config.chancesConfig().deathChanceFor(DeathCategory.FIRE));
+        assertEquals(0.75D, config.chancesConfig().deathChanceFor(DeathCategory.LAVA));
+        assertEquals(0.15D, config.chancesConfig().chatChanceFor(ChatCategory.CELEBRATION));
+        assertEquals(0.45D, config.chancesConfig().chatChanceFor(ChatCategory.QUESTION));
+        assertEquals(List.of("generic death"), config.messagesConfig().deathMessagesFor(DeathCategory.EXPLOSION));
+        assertEquals(List.of("generic chat"), config.messagesConfig().chatMessagesFor(ChatCategory.LAG));
+        assertEquals(3, config.triggersConfig().chatSnark().spamBurst().threshold());
+        assertEquals(8, config.triggersConfig().chatSnark().spamBurst().windowSeconds());
+        assertEquals(12, config.triggersConfig().chatSnark().spamBurst().maxMessageLength());
     }
 
     @Test
     void leavesGenericMessagePoolsEmptyWhenMissing() {
         YamlConfiguration configuration = new YamlConfiguration();
 
-        SnarkyConfig config = SnarkyConfigLoader.load(configuration);
+        SnarkMessagesConfig messagesConfig = SnarkyConfigLoader.loadMessages(configuration);
 
-        assertEquals(List.of(), config.messages().deathMessagesFor(DeathCategory.GENERIC));
-        assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.GENERIC));
-        assertEquals(List.of(), config.messages().deathMessagesFor(DeathCategory.LAVA));
-        assertEquals(List.of(), config.messages().chatMessagesFor(ChatCategory.LAG));
+        assertEquals(List.of(), messagesConfig.deathMessagesFor(DeathCategory.GENERIC));
+        assertEquals(List.of(), messagesConfig.chatMessagesFor(ChatCategory.GENERIC));
+        assertEquals(List.of(), messagesConfig.deathMessagesFor(DeathCategory.LAVA));
+        assertEquals(List.of(), messagesConfig.chatMessagesFor(ChatCategory.LAG));
     }
 
     @Test
-    void bundledConfigResourceLoadsDefaultMessagePools() throws Exception {
-        String configText = readBundledConfigText();
+    void bundledMessagesResourceLoadsDefaultMessagePools() throws Exception {
+        String messagesText = readBundledMessagesText();
         YamlConfiguration configuration = new YamlConfiguration();
-        configuration.loadFromString(configText);
+        configuration.loadFromString(messagesText);
 
-        SnarkyConfig config = SnarkyConfigLoader.load(configuration);
+        SnarkMessagesConfig messagesConfig = SnarkyConfigLoader.loadMessages(configuration);
 
-        assertFalse(config.messages().deathMessagesFor(DeathCategory.GENERIC).isEmpty());
-        assertFalse(config.messages().chatMessagesFor(ChatCategory.LAG).isEmpty());
-        assertEquals("K y s {player}", config.messages().chatMessagesFor(ChatCategory.LAG).get(2));
+        assertFalse(messagesConfig.deathMessagesFor(DeathCategory.GENERIC).isEmpty());
+        assertFalse(messagesConfig.chatMessagesFor(ChatCategory.LAG).isEmpty());
+        assertEquals("K y s {player}", messagesConfig.chatMessagesFor(ChatCategory.LAG).get(2));
     }
 
     @Test
-    void bundledConfigMessagesAreExportedAsSingleQuotedScalars() throws Exception {
-        String configText = readBundledConfigText();
-        Matcher messagesSectionMatcher = Pattern.compile("(?ms)^messages:\\R(?<body>.*)$").matcher(configText);
-        assertTrue(messagesSectionMatcher.find(), "Expected a messages section in config.yml");
+    void bundledMessagesAreExportedAsSingleQuotedScalars() throws Exception {
+        String messagesText = readBundledMessagesText();
+        Matcher messagesSectionMatcher = Pattern.compile("(?ms)^messages:\\R(?<body>.*)$").matcher(messagesText);
+        assertTrue(messagesSectionMatcher.find(), "Expected a messages section in messages.yml");
 
         String messagesSection = messagesSectionMatcher.group("body");
         Pattern messageLinePattern = Pattern.compile("(?m)^\\s*-\\s+(.+)$");
@@ -86,18 +89,18 @@ class SnarkyConfigLoaderTest {
 
         assertTrue(messageCount > 0, "Expected at least one messages.* list item");
         assertTrue(
-                configText.contains("'{killer}, {player} called you a little b*tch'"),
+                messagesText.contains("'{killer}, {player} called you a little b*tch'"),
                 "Expected placeholders in exported messages to remain unchanged"
         );
         assertTrue(
-                configText.contains("'K y s {player}'"),
+                messagesText.contains("'K y s {player}'"),
                 "Expected {player} placeholder to remain unchanged"
         );
     }
 
-    private String readBundledConfigText() throws IOException {
-        Path configPath = Path.of("src/main/resources/config.yml");
-        assertTrue(Files.exists(configPath), "Expected src/main/resources/config.yml to exist");
-        return Files.readString(configPath, StandardCharsets.UTF_8);
+    private String readBundledMessagesText() throws IOException {
+        Path messagesPath = Path.of("src/main/resources/messages.yml");
+        assertTrue(Files.exists(messagesPath), "Expected src/main/resources/messages.yml to exist");
+        return Files.readString(messagesPath, StandardCharsets.UTF_8);
     }
 }

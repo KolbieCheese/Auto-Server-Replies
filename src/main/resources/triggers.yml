@@ -1,0 +1,25 @@
+enabled: true
+prefix: <white>[Server] <reset>
+
+death-snark:
+  enabled: true
+
+chat-snark:
+  enabled: true
+  min-message-length: 6
+  ignore-commands: true
+  spam-burst:
+    threshold: 3
+    window-seconds: 8
+    max-message-length: 12
+
+cooldowns:
+  per-player-seconds: 120
+  global-seconds: 20
+
+filters:
+  bypass-permission: snarkyserver.bypass
+  ignored-worlds: []
+  ignored-prefixes:
+    - '!'
+    - '?'

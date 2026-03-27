@@ -17,54 +17,66 @@ public final class SnarkyConfigLoader {
     }
 
     public static SnarkyConfig load(FileConfiguration configuration) {
+        return load(configuration, configuration, configuration);
+    }
+
+    public static SnarkyConfig load(
+            FileConfiguration messagesConfiguration,
+            FileConfiguration chancesConfiguration,
+            FileConfiguration triggersConfiguration
+    ) {
         double deathGenericChance = getChance(
-                configuration,
+                chancesConfiguration,
                 deathChancePath(DeathCategory.GENERIC),
                 "death-snark.chance",
                 DEFAULT_DEATH_CHANCE
         );
         double chatGenericChance = getChance(
-                configuration,
+                chancesConfiguration,
                 chatChancePath(ChatCategory.GENERIC),
                 "chat-snark.chance",
                 DEFAULT_CHAT_CHANCE
         );
 
         return new SnarkyConfig(
-                configuration.getString("prefix", ""),
-                new SnarkMessagesConfig(
-                        loadDeathMessages(configuration),
-                        loadChatMessages(configuration)
-                ),
+                triggersConfiguration.getString("prefix", ""),
+                loadMessages(messagesConfiguration),
                 new SnarkChancesConfig(
-                        loadDeathChances(configuration, deathGenericChance),
-                        loadChatChances(configuration, chatGenericChance)
+                        loadDeathChances(chancesConfiguration, deathGenericChance),
+                        loadChatChances(chancesConfiguration, chatGenericChance)
                 ),
                 new SnarkTriggersConfig(
-                        configuration.getBoolean("enabled", true),
+                        triggersConfiguration.getBoolean("enabled", true),
                         new SnarkTriggersConfig.DeathSnark(
-                                configuration.getBoolean("death-snark.enabled", true)
+                                triggersConfiguration.getBoolean("death-snark.enabled", true)
                         ),
                         new SnarkTriggersConfig.ChatSnark(
-                                configuration.getBoolean("chat-snark.enabled", true),
-                                configuration.getInt("chat-snark.min-message-length", 6),
-                                configuration.getBoolean("chat-snark.ignore-commands", true),
+                                triggersConfiguration.getBoolean("chat-snark.enabled", true),
+                                triggersConfiguration.getInt("chat-snark.min-message-length", 6),
+                                triggersConfiguration.getBoolean("chat-snark.ignore-commands", true),
                                 new SnarkTriggersConfig.ChatSnark.SpamBurst(
-                                        configuration.getInt("chat-snark.spam-burst.threshold", 3),
-                                        configuration.getInt("chat-snark.spam-burst.window-seconds", 8),
-                                        configuration.getInt("chat-snark.spam-burst.max-message-length", 12)
+                                        triggersConfiguration.getInt("chat-snark.spam-burst.threshold", 3),
+                                        triggersConfiguration.getInt("chat-snark.spam-burst.window-seconds", 8),
+                                        triggersConfiguration.getInt("chat-snark.spam-burst.max-message-length", 12)
                                 )
                         ),
                         new SnarkTriggersConfig.Cooldowns(
-                                configuration.getInt("cooldowns.per-player-seconds", 120),
-                                configuration.getInt("cooldowns.global-seconds", 20)
+                                triggersConfiguration.getInt("cooldowns.per-player-seconds", 120),
+                                triggersConfiguration.getInt("cooldowns.global-seconds", 20)
                         ),
                         new SnarkTriggersConfig.Filters(
-                                configuration.getString("filters.bypass-permission", "snarkyserver.bypass"),
-                                configuration.getStringList("filters.ignored-worlds"),
-                                configuration.getStringList("filters.ignored-prefixes")
+                                triggersConfiguration.getString("filters.bypass-permission", "snarkyserver.bypass"),
+                                triggersConfiguration.getStringList("filters.ignored-worlds"),
+                                triggersConfiguration.getStringList("filters.ignored-prefixes")
                         )
                 )
+        );
+    }
+
+    public static SnarkMessagesConfig loadMessages(FileConfiguration configuration) {
+        return new SnarkMessagesConfig(
+                loadDeathMessages(configuration),
+                loadChatMessages(configuration)
         );
     }
 
