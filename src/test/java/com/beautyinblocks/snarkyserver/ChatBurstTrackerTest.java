@@ -13,7 +13,7 @@ class ChatBurstTrackerTest {
     void triggersOnlyAfterConfiguredBurst() {
         ChatBurstTracker tracker = new ChatBurstTracker();
         UUID playerId = UUID.randomUUID();
-        SnarkyConfig.ChatSnark.SpamBurst spamBurst = new SnarkyConfig.ChatSnark.SpamBurst(3, 8, 12);
+        SnarkTriggersConfig.ChatSnark.SpamBurst spamBurst = new SnarkTriggersConfig.ChatSnark.SpamBurst(3, 8, 12);
         Instant start = Instant.parse("2026-03-25T23:00:00Z");
 
         assertFalse(tracker.recordAndCheck(playerId, "ok", start, spamBurst));

@@ -30,20 +30,26 @@ final class TestSnarkConfigs {
             chatMessages.put(category, List.of("Chat " + category.configKey() + " {player} {message}"));
         }
 
-        return new SnarkyConfig(
+        SnarkMessagesConfig messagesConfig = new SnarkMessagesConfig(deathMessages, chatMessages);
+        SnarkChancesConfig chancesConfig = new SnarkChancesConfig(deathChances, chatChances);
+        SnarkTriggersConfig triggersConfig = new SnarkTriggersConfig(
                 enabled,
-                "<white>[Server] <reset>",
-                new SnarkyConfig.DeathSnark(deathEnabled, deathChances),
-                new SnarkyConfig.ChatSnark(
+                new SnarkTriggersConfig.DeathSnark(deathEnabled),
+                new SnarkTriggersConfig.ChatSnark(
                         chatEnabled,
-                        chatChances,
                         6,
                         true,
-                        new SnarkyConfig.ChatSnark.SpamBurst(3, 8, 12)
+                        new SnarkTriggersConfig.ChatSnark.SpamBurst(3, 8, 12)
                 ),
-                new SnarkyConfig.Cooldowns(perPlayerCooldownSeconds, globalCooldownSeconds),
-                new SnarkyConfig.Filters("snarkyserver.bypass", List.of(), List.of()),
-                new SnarkyConfig.Messages(deathMessages, chatMessages)
+                new SnarkTriggersConfig.Cooldowns(perPlayerCooldownSeconds, globalCooldownSeconds),
+                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of())
+        );
+
+        return new SnarkyConfig(
+                "<white>[Server] <reset>",
+                messagesConfig,
+                chancesConfig,
+                triggersConfig
         );
     }
 }
