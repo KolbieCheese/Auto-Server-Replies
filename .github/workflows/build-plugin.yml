@@ -45,12 +45,10 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
-
       # Build the Paper plugin jar on every push, pull request, and manual run.
+      # Use bash explicitly so the build does not depend on gradlew file mode in git.
       - name: Build plugin
-        run: ./gradlew clean build
+        run: bash ./gradlew --no-daemon --stacktrace clean build
 
       # GitHub source zip/tarball downloads only contain source files.
       # Download the compiled plugin jar from this workflow run's artifact instead.
