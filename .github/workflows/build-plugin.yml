@@ -23,9 +23,6 @@ on:
       - '.github/workflows/build-plugin.yml'
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
   group: build-plugin-${{ github.ref }}
   cancel-in-progress: true
