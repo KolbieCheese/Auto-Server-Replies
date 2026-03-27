@@ -21,7 +21,7 @@ public final class SnarkService {
     private final ChatCategoryClassifier chatCategoryClassifier;
     private final ChatBurstTracker chatBurstTracker;
     private final PlayerVisibilityChecker playerVisibilityChecker;
-    private final SnarkyConfig.Messages testMessageFallbacks;
+    private final SnarkMessagesConfig testMessageFallbacks;
 
     public SnarkService(
             RandomGenerator random,
@@ -42,7 +42,7 @@ public final class SnarkService {
                 chatCategoryClassifier,
                 chatBurstTracker,
                 playerVisibilityChecker,
-                config.messages()
+                config.messagesConfig()
         );
     }
 
@@ -55,7 +55,7 @@ public final class SnarkService {
             ChatCategoryClassifier chatCategoryClassifier,
             ChatBurstTracker chatBurstTracker,
             PlayerVisibilityChecker playerVisibilityChecker,
-            SnarkyConfig.Messages testMessageFallbacks
+            SnarkMessagesConfig testMessageFallbacks
     ) {
         this.random = random;
         this.cooldownManager = cooldownManager;
@@ -95,7 +95,7 @@ public final class SnarkService {
                 player.getUniqueId(),
                 normalized,
                 now,
-                config.chatSnark().spamBurst()
+                config.triggersConfig().chatSnark().spamBurst()
         );
         ChatCategory category = chatCategoryClassifier.classify(normalized, spamBurstTriggered);
         return buildChatReply(player, player.getName(), category, normalized, AUTOMATIC_GATE, now);
@@ -136,7 +136,7 @@ public final class SnarkService {
     }
 
     public boolean isChatEnabled() {
-        return config.enabled() && config.chatSnark().enabled();
+        return config.triggersConfig().enabled() && config.triggersConfig().chatSnark().enabled();
     }
 
     public boolean shouldHandleChatAsync(String messageText) {
@@ -145,14 +145,14 @@ public final class SnarkService {
 
     public boolean shouldSkipChatMessageLightweight(String messageText) {
         String trimmed = normalize(messageText);
-        if (trimmed.length() < config.chatSnark().minMessageLength()) {
+        if (trimmed.length() < config.triggersConfig().chatSnark().minMessageLength()) {
             return true;
         }
-        if (config.chatSnark().ignoreCommands() && trimmed.startsWith("/")) {
+        if (config.triggersConfig().chatSnark().ignoreCommands() && trimmed.startsWith("/")) {
             return true;
         }
 
-        return config.filters().ignoredPrefixes().stream().anyMatch(trimmed::startsWith);
+        return config.triggersConfig().filters().ignoredPrefixes().stream().anyMatch(trimmed::startsWith);
     }
 
     public SnarkyConfig config() {
@@ -172,14 +172,14 @@ public final class SnarkService {
             List<String> fallbackMessages
     ) {
         Instant now = Instant.now();
-        if (!passesSharedChecks(player, gate, now, config.deathSnark().enabled())) {
+        if (!passesSharedChecks(player, gate, now, config.triggersConfig().deathSnark().enabled())) {
             return null;
         }
-        if (gate.checkChance() && !passesChance(config.deathSnark().chanceFor(category))) {
+        if (gate.checkChance() && !passesChance(config.chancesConfig().deathChanceFor(category))) {
             return null;
         }
 
-        Component component = render(config.messages().deathMessagesFor(category), fallbackMessages, Map.of(
+        Component component = render(config.messagesConfig().deathMessagesFor(category), fallbackMessages, Map.of(
                 "player", playerName,
                 "killer", normalize(killerName),
                 "message", ""
@@ -210,14 +210,14 @@ public final class SnarkService {
             Instant now,
             List<String> fallbackMessages
     ) {
-        if (!passesSharedChecks(player, gate, now, config.chatSnark().enabled())) {
+        if (!passesSharedChecks(player, gate, now, config.triggersConfig().chatSnark().enabled())) {
             return null;
         }
-        if (gate.checkChance() && !passesChance(config.chatSnark().chanceFor(category))) {
+        if (gate.checkChance() && !passesChance(config.chancesConfig().chatChanceFor(category))) {
             return null;
         }
 
-        Component component = render(config.messages().chatMessagesFor(category), fallbackMessages, Map.of(
+        Component component = render(config.messagesConfig().chatMessagesFor(category), fallbackMessages, Map.of(
                 "player", playerName,
                 "killer", "",
                 "message", messageText
@@ -229,7 +229,7 @@ public final class SnarkService {
     }
 
     private boolean passesSharedChecks(Player player, ReplyGate gate, Instant now, boolean familyEnabled) {
-        if (gate.checkEnabled() && (!config.enabled() || !familyEnabled)) {
+        if (gate.checkEnabled() && (!config.triggersConfig().enabled() || !familyEnabled)) {
             return false;
         }
         if (!gate.checkFilters() && !gate.checkCooldowns()) {
@@ -246,11 +246,11 @@ public final class SnarkService {
     }
 
     private boolean passesPlayerFilters(Player player) {
-        if (!config.filters().bypassPermission().isBlank() && player.hasPermission(config.filters().bypassPermission())) {
+        if (!config.triggersConfig().filters().bypassPermission().isBlank() && player.hasPermission(config.triggersConfig().filters().bypassPermission())) {
             return false;
         }
 
-        return config.filters().ignoredWorlds().stream()
+        return config.triggersConfig().filters().ignoredWorlds().stream()
                 .noneMatch(world -> world.equalsIgnoreCase(player.getWorld().getName()));
     }
 
