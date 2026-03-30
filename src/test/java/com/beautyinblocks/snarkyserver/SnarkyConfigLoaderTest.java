@@ -67,7 +67,7 @@ class SnarkyConfigLoaderTest {
 
         assertFalse(messagesConfig.deathMessagesFor(DeathCategory.GENERIC).isEmpty());
         assertFalse(messagesConfig.chatMessagesFor(ChatCategory.LAG).isEmpty());
-        assertEquals("K y s {player}", messagesConfig.chatMessagesFor(ChatCategory.LAG).get(2));
+        assertEquals("Fix your internet, {player}", messagesConfig.chatMessagesFor(ChatCategory.LAG).get(2));
     }
 
     @Test
@@ -92,11 +92,11 @@ class SnarkyConfigLoaderTest {
 
         assertTrue(messageCount > 0, "Expected at least one messages.* list item");
         assertTrue(
-                messagesText.contains("'{killer}, {player} called you a little b*tch'"),
+                messagesText.contains("'{killer} put {player} in the dirt'"),
                 "Expected placeholders in exported messages to remain unchanged"
         );
         assertTrue(
-                messagesText.contains("'K y s {player}'"),
+                messagesText.contains("'Fix your internet, {player}'"),
                 "Expected {player} placeholder to remain unchanged"
         );
     }
