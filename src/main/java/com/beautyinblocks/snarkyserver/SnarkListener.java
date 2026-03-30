@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
@@ -49,5 +50,13 @@ public final class SnarkListener implements Listener {
                 Bukkit.broadcast(snark);
             }
         });
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Component snark = snarkService.buildAutomaticJoinReply(event.getPlayer());
+        if (snark != null) {
+            Bukkit.broadcast(snark);
+        }
     }
 }

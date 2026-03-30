@@ -98,7 +98,19 @@ public final class SnarkService {
                 config.triggersConfig().chatSnark().spamBurst()
         );
         ChatCategory category = chatCategoryClassifier.classify(normalized, spamBurstTriggered);
+        if (category == ChatCategory.GREETING) {
+            return null;
+        }
         return buildChatReply(player, player.getName(), category, normalized, AUTOMATIC_GATE, now);
+    }
+
+    public Component buildAutomaticJoinReply(Player player) {
+        if (playerVisibilityChecker.isHidden(player)) {
+            return null;
+        }
+
+        Instant now = Instant.now();
+        return buildChatReply(player, player.getName(), ChatCategory.GREETING, "", AUTOMATIC_GATE, now);
     }
 
     public Component buildTestDeathReply(String playerName, DeathCategory category, String killerName) {
