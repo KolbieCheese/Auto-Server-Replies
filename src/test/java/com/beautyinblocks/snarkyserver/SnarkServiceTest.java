@@ -180,6 +180,49 @@ class SnarkServiceTest {
     }
 
     @Test
+    void chatGreetingsDoNotTriggerAutomaticReplies() {
+        Server server = mockServer();
+        Player player = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174005"), GameMode.SURVIVAL);
+        doReturn(List.of(player)).when(server).getOnlinePlayers();
+
+        SnarkService service = new SnarkService(
+                new Random(0L),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
+                new SnarkFormatter("<white>[Server] <reset>"),
+                configWithMessages(List.of("Death"), List.of("Chat greeting {player}")),
+                new DeathCategoryClassifier(),
+                new ChatCategoryClassifier(),
+                new ChatBurstTracker(),
+                new PlayerVisibilityChecker(server)
+        );
+
+        assertNull(service.buildAutomaticChatReply(player, "hello"));
+    }
+
+    @Test
+    void joinsTriggerGreetingReplies() {
+        Server server = mockServer();
+        Player player = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174006"), GameMode.SURVIVAL);
+        doReturn(List.of(player)).when(server).getOnlinePlayers();
+
+        SnarkService service = new SnarkService(
+                new Random(0L),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
+                new SnarkFormatter("<white>[Server] <reset>"),
+                configWithMessages(List.of("Death"), List.of("Chat greeting {player}")),
+                new DeathCategoryClassifier(),
+                new ChatCategoryClassifier(),
+                new ChatBurstTracker(),
+                new PlayerVisibilityChecker(server)
+        );
+
+        Component component = service.buildAutomaticJoinReply(player);
+
+        assertNotNull(component);
+        assertEquals("[Server] Chat greeting Kolbie", PlainTextComponentSerializer.plainText().serialize(component));
+    }
+
+    @Test
     void hiddenKillersDoNotExposePvpOrKillerName() {
         Server server = mockServer();
         Player victim = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174003"), GameMode.SURVIVAL);
