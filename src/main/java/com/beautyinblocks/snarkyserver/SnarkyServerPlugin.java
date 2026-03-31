@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
     private static final String MESSAGES_FILE = "messages.yml";
@@ -24,7 +25,21 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        SnarkyConfigMigrator configMigrator = new SnarkyConfigMigrator(getLogger());
+        configMigrator.migrateLegacyDataFolderIfNeeded(getDataFolder().toPath());
+        boolean needsLegacyCombinedConfigMigration = configMigrator.needsLegacyCombinedConfigMigration(getDataFolder().toPath());
         bootstrapConfigResources();
+        try {
+            if (needsLegacyCombinedConfigMigration) {
+                configMigrator.migrateLegacyCombinedConfig(getDataFolder().toPath());
+            }
+            configMigrator.ensureSplitConfigSchemaVersion(getDataFolder().toPath());
+        } catch (IOException | InvalidConfigurationException exception) {
+            getLogger().log(Level.SEVERE, "Failed to migrate Snarky Server configuration files.", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         reloadPluginState();
 
         PluginCommand reloadCommand = getCommand("snarkreload");
@@ -48,7 +63,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
             getLogger().warning("Command 'snarktest' was not found in plugin.yml; test command is unavailable.");
         }
 
-        getLogger().info("SnarkyServerPlugin enabled.");
+        getLogger().info("Snarky Server enabled.");
     }
 
     @Override
@@ -60,7 +75,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         if (chatBurstTracker != null) {
             chatBurstTracker.clear();
         }
-        getLogger().info("SnarkyServerPlugin disabled.");
+        getLogger().info("Snarky Server disabled.");
     }
 
     public void reloadPluginState() {
@@ -68,9 +83,9 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         try {
             loadedConfigurations = loadConfigurationsFromDisk();
         } catch (IOException | InvalidConfigurationException exception) {
-            getLogger().severe("Failed to reload SnarkyServer configuration files (messages.yml, chances.yml, triggers.yml)."
+            getLogger().severe("Failed to reload Snarky Server configuration files (messages.yml, chances.yml, triggers.yml)."
                     + " Keeping previous in-memory configuration. " + exception.getMessage());
-            throw new IllegalStateException("SnarkyServer configuration reload failed.", exception);
+            throw new IllegalStateException("Snarky Server configuration reload failed.", exception);
         }
 
         SnarkyConfig config = SnarkyConfigLoader.load(

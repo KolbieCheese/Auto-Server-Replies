@@ -1,26 +1,26 @@
-name: SnarkyServer
+name: Snarky Server
 version: ${version}
 main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21.11'
 author: Beauty in Blocks
-description: Lightweight snarky chat/death responder plugin for Paper 1.21.11
+description: Lightweight Snarky Server chat/death responder plugin for Paper 1.21.11
 commands:
   snarkreload:
-    description: Reload SnarkyServer configuration.
+    description: Reload Snarky Server configuration.
     usage: /<command>
     aliases: [autoreplies]
     permission: snarkyserver.reload
   snarktest:
-    description: Force SnarkyServer test replies and inspect categories or cooldowns.
+    description: Force Snarky Server test replies and inspect categories or cooldowns.
     usage: /<command> <list|death|chat|random|cooldowns>
     permission: snarkyserver.test
 permissions:
   snarkyserver.bypass:
-    description: Prevent this player from triggering automatic SnarkyServer replies.
+    description: Prevent this player from triggering automatic Snarky Server replies.
     default: op
   snarkyserver.reload:
-    description: Reload the SnarkyServer configuration from disk.
+    description: Reload the Snarky Server configuration from disk.
     default: op
   snarkyserver.test:
-    description: Use admin testing commands for SnarkyServer replies.
+    description: Use admin testing commands for Snarky Server replies.
     default: op

@@ -1,3 +1,5 @@
+config-schema-version: 1
+
 enabled: true
 prefix: <white>[Server] <reset>
 

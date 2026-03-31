@@ -1,8 +1,8 @@
 # Deprecated as of v0.6.0.
-# SnarkyServer now uses split configuration files in the plugin data folder:
+# Snarky Server now uses split configuration files in the plugin data folder:
 # - messages.yml
 # - chances.yml
 # - triggers.yml
 #
-# Existing servers should migrate keys from this legacy file into the new files.
+# Existing servers are migrated automatically when possible.
 # This resource remains only for migration reference and is no longer loaded at runtime.

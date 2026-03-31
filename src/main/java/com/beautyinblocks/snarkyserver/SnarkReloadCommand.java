@@ -27,10 +27,10 @@ public final class SnarkReloadCommand implements CommandExecutor {
 
         try {
             reloadAction.run();
-            sender.sendMessage(ChatColor.GREEN + "SnarkyServer configuration reloaded.");
+            sender.sendMessage(ChatColor.GREEN + "Snarky Server configuration reloaded.");
         } catch (Exception ex) {
-            sender.sendMessage(ChatColor.RED + "Failed to reload SnarkyServer configuration. Check console for details.");
-            logger.log(Level.SEVERE, "Failed to reload SnarkyServer configuration.", ex);
+            sender.sendMessage(ChatColor.RED + "Failed to reload Snarky Server configuration. Check console for details.");
+            logger.log(Level.SEVERE, "Failed to reload Snarky Server configuration.", ex);
         }
 
         return true;

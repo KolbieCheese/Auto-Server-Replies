@@ -1,35 +1,34 @@
-# Auto-Server-Replies
+# Snarky Server
 
 Paper plugin builds from GitHub Actions are published in two places:
 
-- GitHub Releases on default-branch builds when `gradle.properties` has a new version
-- The `snarkyserver-plugin` artifact on each workflow run in Actions
+- GitHub Releases on every default-branch build as `Snarky Server <version>.jar`
+- A matching `Snarky Server <version>` artifact on each workflow run in Actions
 
 GitHub's repository source downloads such as `Source code (zip)` and `Source code (tar.gz)` only contain the source files. They do not include the compiled plugin jar.
 
 ## Configuration layout (v0.6+)
 
-SnarkyServer now uses **three config files** in the plugin data folder:
+Snarky Server now uses **three config files** in the plugin data folder:
 
 - `messages.yml`: all death/chat message pools
 - `chances.yml`: per-category chance values
 - `triggers.yml`: feature toggles, prefix, cooldowns, filters, and chat trigger behavior
 
-`config.yml` is now deprecated and no longer loaded at runtime.
+`triggers.yml` also carries `config-schema-version` so startup migration only reruns when the config implementation changes.
 
 ### Migration notes for existing servers
 
-If you are upgrading from a version that used `config.yml`:
+If you are upgrading from an older build:
 
-1. Start the plugin once to let it bootstrap `messages.yml`, `chances.yml`, and `triggers.yml`.
-2. Copy your existing `messages.*` entries into `messages.yml`.
-3. Copy your `death-snark.chance(s)` and `chat-snark.chance(s)` entries into `chances.yml`.
-4. Copy top-level behavior keys (`enabled`, `prefix`, `cooldowns`, `filters`, `death-snark.enabled`, `chat-snark.*`) into `triggers.yml`.
-5. Keep `config.yml` only as a temporary migration reference, then remove it when finished.
+1. If the old plugin data folder is `plugins/SnarkyServer`, the renamed `Snarky Server` build will copy it into `plugins/Snarky Server` on first boot.
+2. If the old setup still uses a single `config.yml`, startup will split that file into `messages.yml`, `chances.yml`, and `triggers.yml` automatically.
+3. If the split-config schema has not changed, startup leaves the old legacy folder alone instead of deleting it.
+4. Local development builds default to `pluginBaseVersion-SNAPSHOT`, while GitHub Actions increments the numeric `major.minor.patch` version with rollover at 10 per digit.
 
 ## External output discovery
 
-SnarkyServer can now discover compatible plugin outputs through a manifest-based integration path.
+Snarky Server can now discover compatible plugin outputs through a manifest-based integration path.
 
 - Snarky scans loaded plugins for `META-INF/snarky-outputs.json` at startup.
 - Snarky scans again when another plugin is enabled later.
@@ -71,4 +70,4 @@ You can enable or disable discovered outputs by editing `triggers.yml`. `/snarkt
 
 ### Lightweight Clans
 
-If Lightweight Clans ships the manifest above, SnarkyServer will discover `lightweightclans:clan_chat`, register a listener for its exported custom event, and feed clan chat messages into the normal chat snark pipeline only when that external output is enabled.
+If Lightweight Clans ships the manifest above, Snarky Server will discover `lightweightclans:clan_chat`, register a listener for its exported custom event, and feed clan chat messages into the normal chat snark pipeline only when that external output is enabled.

@@ -31,6 +31,8 @@ jobs:
   build:
     name: Build plugin jar
     runs-on: ubuntu-latest
+    outputs:
+      plugin_version: ${{ steps.version.outputs.plugin_version }}
     permissions:
       contents: read
 
@@ -45,18 +47,37 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      - name: Calculate plugin version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_version="$(grep '^pluginBaseVersion=' gradle.properties | cut -d= -f2)"
+          IFS='.' read -r major minor patch <<< "$base_version"
+          if ! [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ && "$patch" =~ ^[0-9]+$ ]]; then
+            echo "Invalid pluginBaseVersion '$base_version'. Expected numeric major.minor.patch." >&2
+            exit 1
+          fi
+
+          patch=$((patch + GITHUB_RUN_NUMBER))
+          minor=$((minor + patch / 10))
+          patch=$((patch % 10))
+          major=$((major + minor / 10))
+          minor=$((minor % 10))
+
+          echo "plugin_version=${major}.${minor}.${patch}" >> "$GITHUB_OUTPUT"
+
       # Build the Paper plugin jar on every push, pull request, and manual run.
       # Use bash explicitly so the build does not depend on gradlew file mode in git.
       - name: Build plugin
-        run: bash ./gradlew --no-daemon --stacktrace clean build
+        run: bash ./gradlew --no-daemon --stacktrace clean build -PpluginVersion="${{ steps.version.outputs.plugin_version }}"
 
-      # GitHub source zip/tarball downloads only contain source files.
-      # Download the compiled plugin jar from this workflow run's artifact instead.
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
-          name: snarkyserver-plugin
-          path: build/libs/snarkyserver-*.jar
+          name: Snarky Server ${{ steps.version.outputs.plugin_version }}
+          path: "build/libs/Snarky Server ${{ steps.version.outputs.plugin_version }}.jar"
           if-no-files-found: error
 
   release:
@@ -65,72 +86,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.event_name == 'push'
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
-
-      # Use the version already declared by the Gradle project so release tags stay predictable.
-      - name: Read release version
-        id: version
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          version="$(grep '^version=' gradle.properties | cut -d= -f2)"
-          if [[ -z "$version" ]]; then
-            echo "Could not read version from gradle.properties" >&2
-            exit 1
-          fi
-
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
-
-      # Publish one release per Gradle version. Bump gradle.properties when you want a new release.
-      - name: Check whether this version is already released
-        id: release_state
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          tag="${{ steps.version.outputs.tag }}"
-          tag_sha="$(git ls-remote --tags origin "refs/tags/$tag" | cut -f1)"
-
-          if [[ -z "$tag_sha" ]]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-          elif [[ "$tag_sha" == "$GITHUB_SHA" ]]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "Release $tag already points to this commit; republishing assets if needed."
-          else
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            echo "Release $tag already exists on a different commit; bump gradle.properties to publish a new version."
-          fi
-
-      # Reuse the exact jar produced by the build job so Releases and Actions artifacts match.
       - name: Download built jar
-        if: steps.release_state.outputs.should_publish == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: snarkyserver-plugin
+          name: Snarky Server ${{ needs.build.outputs.plugin_version }}
           path: release-assets
 
-      - name: Verify release asset
-        if: steps.release_state.outputs.should_publish == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          compgen -G 'release-assets/snarkyserver-*.jar' > /dev/null
-
-      # Default-branch builds publish the jar to GitHub Releases for easier long-term downloads.
       - name: Publish GitHub release
-        if: steps.release_state.outputs.should_publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: v${{ needs.build.outputs.plugin_version }}
+          name: Snarky Server ${{ needs.build.outputs.plugin_version }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: release-assets/snarkyserver-*.jar
+          files: "release-assets/Snarky Server ${{ needs.build.outputs.plugin_version }}.jar"
           fail_on_unmatched_files: true
+          overwrite_files: true
