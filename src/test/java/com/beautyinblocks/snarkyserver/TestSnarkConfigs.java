@@ -42,7 +42,8 @@ final class TestSnarkConfigs {
                         new SnarkTriggersConfig.ChatSnark.SpamBurst(3, 8, 12)
                 ),
                 new SnarkTriggersConfig.Cooldowns(perPlayerCooldownSeconds, globalCooldownSeconds),
-                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of())
+                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of()),
+                java.util.Map.of()
         );
 
         return new SnarkyConfig(

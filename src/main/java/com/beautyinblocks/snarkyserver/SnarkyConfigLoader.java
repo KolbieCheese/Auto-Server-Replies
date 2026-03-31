@@ -1,8 +1,10 @@
 package com.beautyinblocks.snarkyserver;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +70,8 @@ public final class SnarkyConfigLoader {
                                 triggersConfiguration.getString("filters.bypass-permission", "snarkyserver.bypass"),
                                 triggersConfiguration.getStringList("filters.ignored-worlds"),
                                 triggersConfiguration.getStringList("filters.ignored-prefixes")
-                        )
+                        ),
+                        loadExternalOutputs(triggersConfiguration)
                 )
         );
     }
@@ -203,5 +206,27 @@ public final class SnarkyConfigLoader {
         }
 
         return List.of();
+    }
+
+    private static Map<String, SnarkTriggersConfig.ExternalOutputToggle> loadExternalOutputs(FileConfiguration configuration) {
+        ConfigurationSection section = configuration.getConfigurationSection("external-outputs");
+        if (section == null) {
+            return Map.of();
+        }
+
+        Map<String, SnarkTriggersConfig.ExternalOutputToggle> toggles = new LinkedHashMap<>();
+        for (String outputId : section.getKeys(false)) {
+            String basePath = "external-outputs." + outputId;
+            toggles.put(outputId, new SnarkTriggersConfig.ExternalOutputToggle(
+                    configuration.getBoolean(basePath + ".enabled", false),
+                    configuration.getString(basePath + ".display-name", ""),
+                    configuration.getString(basePath + ".source-plugin", ""),
+                    configuration.getString(basePath + ".kind", ""),
+                    configuration.getString(basePath + ".event-class", ""),
+                    configuration.getString(basePath + ".description", "")
+            ));
+        }
+
+        return toggles;
     }
 }

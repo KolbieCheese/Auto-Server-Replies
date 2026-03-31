@@ -25,9 +25,10 @@ class SnarkTestCommandTest {
         Server server = mock(Server.class);
         SnarkService service = mock(SnarkService.class);
         CooldownManager cooldownManager = mock(CooldownManager.class);
+        SnarkExternalOutputRegistry externalOutputRegistry = mock(SnarkExternalOutputRegistry.class);
         CommandSender sender = mock(CommandSender.class);
         Command command = mock(Command.class);
-        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager);
+        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager, () -> externalOutputRegistry);
         when(sender.hasPermission("snarkyserver.test")).thenReturn(true);
         when(service.buildTestDeathReply("Kolbie", DeathCategory.LAVA, "")).thenReturn(Component.text("[Server] preview"));
 
@@ -42,11 +43,12 @@ class SnarkTestCommandTest {
         Server server = mock(Server.class);
         SnarkService service = mock(SnarkService.class);
         CooldownManager cooldownManager = mock(CooldownManager.class);
+        SnarkExternalOutputRegistry externalOutputRegistry = mock(SnarkExternalOutputRegistry.class);
         CommandSender sender = mock(CommandSender.class);
         Command command = mock(Command.class);
         Player player = mock(Player.class);
         World world = mock(World.class);
-        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager);
+        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager, () -> externalOutputRegistry);
         when(sender.hasPermission("snarkyserver.test")).thenReturn(true);
         when(server.getPlayerExact("Kolbie")).thenReturn(player);
         when(player.getName()).thenReturn("Kolbie");
@@ -67,9 +69,10 @@ class SnarkTestCommandTest {
         Server server = mock(Server.class);
         SnarkService service = mock(SnarkService.class);
         CooldownManager cooldownManager = mock(CooldownManager.class);
+        SnarkExternalOutputRegistry externalOutputRegistry = mock(SnarkExternalOutputRegistry.class);
         CommandSender sender = mock(CommandSender.class);
         Command command = mock(Command.class);
-        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager);
+        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager, () -> externalOutputRegistry);
         when(sender.hasPermission("snarkyserver.test")).thenReturn(true);
         when(service.buildTestChatReply("Kolbie", ChatCategory.GREETING, "")).thenReturn(Component.text("[Server] preview"));
 
@@ -77,5 +80,36 @@ class SnarkTestCommandTest {
 
         verify(service).buildTestChatReply("Kolbie", ChatCategory.GREETING, "");
         verify(server).broadcast(any(Component.class));
+    }
+
+    @Test
+    void listShowsBuiltInAndExternalOutputs() {
+        Server server = mock(Server.class);
+        SnarkService service = mock(SnarkService.class);
+        CooldownManager cooldownManager = mock(CooldownManager.class);
+        SnarkExternalOutputRegistry externalOutputRegistry = mock(SnarkExternalOutputRegistry.class);
+        CommandSender sender = mock(CommandSender.class);
+        Command command = mock(Command.class);
+        SnarkTestCommand snarkTestCommand = new SnarkTestCommand(server, () -> service, () -> cooldownManager, () -> externalOutputRegistry);
+        when(sender.hasPermission("snarkyserver.test")).thenReturn(true);
+        when(service.config()).thenReturn(TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D));
+        when(externalOutputRegistry.listOutputs()).thenReturn(List.of(
+                new SnarkExternalOutputRegistry.OutputStatus(
+                        "lightweightclans:clan_chat",
+                        "Lightweight Clans - Clan Chat",
+                        "LightweightClans",
+                        "chat",
+                        "example.ClanChatMessageEvent",
+                        "Clan chat messages from Lightweight Clans",
+                        false,
+                        true
+                )
+        ));
+
+        snarkTestCommand.onCommand(sender, command, "snarktest", new String[]{"list"});
+
+        verify(sender).sendMessage(contains("death-snark"));
+        verify(sender).sendMessage(contains("chat-snark"));
+        verify(sender).sendMessage(contains("lightweightclans:clan_chat"));
     }
 }

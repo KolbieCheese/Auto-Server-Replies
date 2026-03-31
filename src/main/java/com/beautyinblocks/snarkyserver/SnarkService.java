@@ -85,6 +85,10 @@ public final class SnarkService {
     }
 
     public Component buildAutomaticChatReply(Player player, String messageText) {
+        return buildAutomaticChatReply(player, messageText, null);
+    }
+
+    public Component buildAutomaticChatReply(Player player, String messageText, SnarkExternalChatContext chatContext) {
         if (playerVisibilityChecker.isHidden(player)) {
             return null;
         }
@@ -152,6 +156,10 @@ public final class SnarkService {
     }
 
     public boolean shouldHandleChatAsync(String messageText) {
+        return shouldHandleChatAsync(messageText, null);
+    }
+
+    public boolean shouldHandleChatAsync(String messageText, SnarkExternalChatContext chatContext) {
         return isChatEnabled() && !shouldSkipChatMessageLightweight(messageText);
     }
 

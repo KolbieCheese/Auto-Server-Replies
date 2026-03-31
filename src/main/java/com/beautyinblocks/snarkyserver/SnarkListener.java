@@ -45,7 +45,7 @@ public final class SnarkListener implements Listener {
                 return;
             }
 
-            Component snark = snarkService.buildAutomaticChatReply(player, plainMessage);
+            Component snark = snarkService.buildAutomaticChatReply(player, plainMessage, null);
             if (snark != null) {
                 Bukkit.broadcast(snark);
             }

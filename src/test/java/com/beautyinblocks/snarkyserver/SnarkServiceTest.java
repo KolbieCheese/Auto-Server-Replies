@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -253,6 +254,56 @@ class SnarkServiceTest {
         assertEquals("[Server] Generic ", rendered);
     }
 
+    @Test
+    void externalChatContextUsesTheSameAutomaticPipeline() {
+        Server server = mockServer();
+        Player playerA = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174101"), GameMode.SURVIVAL);
+        Player playerB = mockPlayer("Kolbie", UUID.fromString("123e4567-e89b-12d3-a456-426614174102"), GameMode.SURVIVAL);
+        doReturn(List.of(playerA, playerB)).when(server).getOnlinePlayers();
+
+        SnarkyConfig config = configWithMessages(List.of("Death"), List.of("Chat {player}|{message}"));
+        SnarkExternalChatContext context = new SnarkExternalChatContext(
+                "lightweightclans:clan_chat",
+                "Lightweight Clans - Clan Chat",
+                "LightweightClans",
+                "chat",
+                "Builders",
+                "BLD",
+                true,
+                2
+        );
+
+        SnarkService builtInService = new SnarkService(
+                new Random(0L),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
+                new SnarkFormatter("<white>[Server] <reset>"),
+                config,
+                new DeathCategoryClassifier(),
+                new ChatCategoryClassifier(),
+                new ChatBurstTracker(),
+                new PlayerVisibilityChecker(server)
+        );
+        SnarkService externalService = new SnarkService(
+                new Random(0L),
+                new CooldownManager(new SnarkTriggersConfig.Cooldowns(60, 20)),
+                new SnarkFormatter("<white>[Server] <reset>"),
+                config,
+                new DeathCategoryClassifier(),
+                new ChatCategoryClassifier(),
+                new ChatBurstTracker(),
+                new PlayerVisibilityChecker(server)
+        );
+
+        String builtIn = PlainTextComponentSerializer.plainText().serialize(
+                builtInService.buildAutomaticChatReply(playerA, "lag again tonight")
+        );
+        String external = PlainTextComponentSerializer.plainText().serialize(
+                externalService.buildAutomaticChatReply(playerB, "lag again tonight", context)
+        );
+
+        assertEquals(builtIn, external);
+    }
+
     private Server mockServer() {
         return mock(Server.class);
     }
@@ -299,7 +350,8 @@ class SnarkServiceTest {
                         new SnarkTriggersConfig.ChatSnark.SpamBurst(3, 8, 12)
                 ),
                 new SnarkTriggersConfig.Cooldowns(60, 20),
-                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of())
+                new SnarkTriggersConfig.Filters("snarkyserver.bypass", List.of(), List.of()),
+                Map.of()
         );
 
         return new SnarkyConfig(

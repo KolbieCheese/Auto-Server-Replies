@@ -20,6 +20,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
     private ChatBurstTracker chatBurstTracker;
     private SnarkService snarkService;
+    private SnarkExternalOutputRegistry externalOutputRegistry;
 
     @Override
     public void onEnable() {
@@ -35,7 +36,12 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
         PluginCommand testCommand = getCommand("snarktest");
         if (testCommand != null) {
-            SnarkTestCommand executor = new SnarkTestCommand(getServer(), this::getSnarkService, this::getCooldownManager);
+            SnarkTestCommand executor = new SnarkTestCommand(
+                    getServer(),
+                    this::getSnarkService,
+                    this::getCooldownManager,
+                    this::getExternalOutputRegistry
+            );
             testCommand.setExecutor(executor);
             testCommand.setTabCompleter(executor);
         } else {
@@ -72,7 +78,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 loadedConfigurations.chances(),
                 loadedConfigurations.triggers()
         );
-        initializeServices(config);
+        initializeServices(config, loadedConfigurations.triggers());
     }
 
     private LoadedConfigurations loadConfigurationsFromDisk() throws IOException, InvalidConfigurationException {
@@ -93,7 +99,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         return configuration;
     }
 
-    private void initializeServices(SnarkyConfig config) {
+    private void initializeServices(SnarkyConfig config, YamlConfiguration triggersConfiguration) {
         HandlerList.unregisterAll(this);
 
         logMissingGenericMessageWarnings(config);
@@ -115,11 +121,32 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 playerVisibilityChecker,
                 testMessageFallbacks
         );
+        SnarkExternalOutputManifestLoader manifestLoader = new SnarkExternalOutputManifestLoader(getLogger());
+        SnarkExternalChatEventBridge chatEventBridge = new SnarkExternalChatEventBridge(
+                this,
+                snarkService,
+                outputId -> externalOutputRegistry != null && externalOutputRegistry.isOutputEnabled(outputId),
+                getLogger()
+        );
+        externalOutputRegistry = new SnarkExternalOutputRegistry(
+                this,
+                triggersConfiguration,
+                new File(getDataFolder(), TRIGGERS_FILE),
+                config.triggersConfig(),
+                manifestLoader,
+                chatEventBridge,
+                getLogger()
+        );
 
         Bukkit.getPluginManager().registerEvents(
                 new SnarkListener(this, snarkService),
                 this
         );
+        Bukkit.getPluginManager().registerEvents(
+                new SnarkExternalOutputDiscoveryListener(externalOutputRegistry),
+                this
+        );
+        externalOutputRegistry.discoverLoadedPlugins();
     }
 
     private void bootstrapConfigResources() {
@@ -147,6 +174,10 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     public SnarkService getSnarkService() {
         return snarkService;
+    }
+
+    public SnarkExternalOutputRegistry getExternalOutputRegistry() {
+        return externalOutputRegistry;
     }
 
     private SnarkMessagesConfig loadBundledTestMessageFallbacks(SnarkMessagesConfig liveMessages) {

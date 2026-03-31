@@ -25,15 +25,18 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
     private final Server server;
     private final Supplier<SnarkService> snarkServiceSupplier;
     private final Supplier<CooldownManager> cooldownManagerSupplier;
+    private final Supplier<SnarkExternalOutputRegistry> externalOutputRegistrySupplier;
 
     public SnarkTestCommand(
             Server server,
             Supplier<SnarkService> snarkServiceSupplier,
-            Supplier<CooldownManager> cooldownManagerSupplier
+            Supplier<CooldownManager> cooldownManagerSupplier,
+            Supplier<SnarkExternalOutputRegistry> externalOutputRegistrySupplier
     ) {
         this.server = server;
         this.snarkServiceSupplier = snarkServiceSupplier;
         this.cooldownManagerSupplier = cooldownManagerSupplier;
+        this.externalOutputRegistrySupplier = externalOutputRegistrySupplier;
     }
 
     @Override
@@ -94,8 +97,26 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleList(CommandSender sender) {
+        SnarkService snarkService = snarkServiceSupplier.get();
         sender.sendMessage(ChatColor.YELLOW + "Death categories: " + String.join(", ", categoryKeys(DeathCategory.values())));
         sender.sendMessage(ChatColor.YELLOW + "Chat categories: " + String.join(", ", categoryKeys(ChatCategory.values())));
+        sender.sendMessage(ChatColor.YELLOW + "Outputs:");
+        sender.sendMessage(ChatColor.YELLOW + " - death-snark: " + stateLabel(snarkService.config().triggersConfig().deathSnark().enabled()));
+        sender.sendMessage(ChatColor.YELLOW + " - chat-snark: " + stateLabel(snarkService.config().triggersConfig().chatSnark().enabled()));
+
+        SnarkExternalOutputRegistry externalOutputRegistry = externalOutputRegistrySupplier.get();
+        List<SnarkExternalOutputRegistry.OutputStatus> externalOutputs = externalOutputRegistry == null
+                ? List.of()
+                : externalOutputRegistry.listOutputs();
+        if (externalOutputs.isEmpty()) {
+            sender.sendMessage(ChatColor.YELLOW + " - external: none discovered");
+            return true;
+        }
+
+        for (SnarkExternalOutputRegistry.OutputStatus output : externalOutputs) {
+            sender.sendMessage(ChatColor.YELLOW + " - " + output.id() + " (" + output.displayName()
+                    + " from " + output.sourcePlugin() + "): " + stateLabel(output.enabled()));
+        }
         return true;
     }
 
@@ -215,5 +236,9 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
 
         long seconds = Math.max(1L, duration.toSeconds());
         return seconds + "s remaining";
+    }
+
+    private String stateLabel(boolean enabled) {
+        return enabled ? "enabled" : "disabled";
     }
 }

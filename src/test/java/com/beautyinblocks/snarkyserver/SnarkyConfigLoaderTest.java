@@ -58,6 +58,25 @@ class SnarkyConfigLoaderTest {
     }
 
     @Test
+    void loadsExternalOutputToggleStateFromTriggers() {
+        YamlConfiguration triggersConfiguration = new YamlConfiguration();
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.enabled", true);
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.display-name", "Lightweight Clans - Clan Chat");
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.source-plugin", "LightweightClans");
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.kind", "chat");
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.event-class", "example.ClanChatMessageEvent");
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.description", "Clan chat messages from Lightweight Clans");
+
+        SnarkyConfig config = SnarkyConfigLoader.load(new YamlConfiguration(), new YamlConfiguration(), triggersConfiguration);
+        SnarkTriggersConfig.ExternalOutputToggle toggle = config.triggersConfig().externalOutputs().get("lightweightclans:clan_chat");
+
+        assertTrue(toggle.enabled());
+        assertEquals("LightweightClans", toggle.sourcePlugin());
+        assertEquals("chat", toggle.kind());
+        assertEquals("example.ClanChatMessageEvent", toggle.eventClass());
+    }
+
+    @Test
     void bundledMessagesResourceLoadsDefaultMessagePools() throws Exception {
         String messagesText = readBundledMessagesText();
         YamlConfiguration configuration = new YamlConfiguration();
