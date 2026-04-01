@@ -45,7 +45,7 @@ class SnarkExternalOutputDiscoveryListenerTest {
         when(server.getPluginManager()).thenReturn(pluginManager);
         when(owner.getServer()).thenReturn(server);
         when(owner.getLogger()).thenReturn(logger);
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(owner, mock(SnarkService.class), outputId -> true, logger);
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(owner, mock(SnarkService.class), outputId -> null, logger);
         SnarkExternalOutputRegistry registry = new SnarkExternalOutputRegistry(
                 owner,
                 new YamlConfiguration(),

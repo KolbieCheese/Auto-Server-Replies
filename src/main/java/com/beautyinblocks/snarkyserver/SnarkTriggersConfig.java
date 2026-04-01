@@ -44,7 +44,8 @@ public record SnarkTriggersConfig(
             String sourcePlugin,
             String kind,
             String eventClass,
-            String description
+            String description,
+            DiscordSrvForwarding discordsrv
     ) {
         public ExternalOutputToggle {
             displayName = normalize(displayName);
@@ -52,6 +53,17 @@ public record SnarkTriggersConfig(
             kind = normalize(kind);
             eventClass = normalize(eventClass);
             description = normalize(description);
+            discordsrv = discordsrv == null ? DiscordSrvForwarding.disabled() : discordsrv;
+        }
+
+        public record DiscordSrvForwarding(boolean enabled, String channel) {
+            public DiscordSrvForwarding {
+                channel = normalize(channel);
+            }
+
+            public static DiscordSrvForwarding disabled() {
+                return new DiscordSrvForwarding(false, "");
+            }
         }
 
         private static String normalize(String value) {

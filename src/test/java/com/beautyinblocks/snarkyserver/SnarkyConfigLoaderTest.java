@@ -66,6 +66,8 @@ class SnarkyConfigLoaderTest {
         triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.kind", "chat");
         triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.event-class", "example.ClanChatMessageEvent");
         triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.description", "Clan chat messages from Lightweight Clans");
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.discordsrv.enabled", true);
+        triggersConfiguration.set("external-outputs.lightweightclans:clan_chat.discordsrv.channel", "clan");
 
         SnarkyConfig config = SnarkyConfigLoader.load(new YamlConfiguration(), new YamlConfiguration(), triggersConfiguration);
         SnarkTriggersConfig.ExternalOutputToggle toggle = config.triggersConfig().externalOutputs().get("lightweightclans:clan_chat");
@@ -74,6 +76,18 @@ class SnarkyConfigLoaderTest {
         assertEquals("LightweightClans", toggle.sourcePlugin());
         assertEquals("chat", toggle.kind());
         assertEquals("example.ClanChatMessageEvent", toggle.eventClass());
+        assertTrue(toggle.discordsrv().enabled());
+        assertEquals("clan", toggle.discordsrv().channel());
+    }
+
+    @Test
+    void usesQuieterFallbackChancesWhenChanceConfigIsMissing() {
+        SnarkyConfig config = SnarkyConfigLoader.load(new YamlConfiguration(), new YamlConfiguration(), new YamlConfiguration());
+
+        assertEquals(0.025D, config.chancesConfig().deathChanceFor(DeathCategory.GENERIC));
+        assertEquals(0.025D, config.chancesConfig().deathChanceFor(DeathCategory.LAVA));
+        assertEquals(0.0125D, config.chancesConfig().chatChanceFor(ChatCategory.GENERIC));
+        assertEquals(0.0125D, config.chancesConfig().chatChanceFor(ChatCategory.LAG));
     }
 
     @Test

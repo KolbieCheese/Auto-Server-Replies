@@ -4,6 +4,7 @@ main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21.11'
 author: Beauty in Blocks
 description: Lightweight Snarky Server chat/death responder plugin for Paper 1.21.11
+softdepend: [DiscordSRV]
 commands:
   snarkreload:
     description: Reload Snarky Server configuration.

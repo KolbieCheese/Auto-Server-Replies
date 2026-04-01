@@ -1,32 +1,32 @@
 # Per-category chances from 0.0 to 1.0.
 death-snark:
   chances:
-    generic: 0.1
-    lava: 0.1
-    fall: 0.1
-    pvp: 0.1
-    drowning: 0.1
-    fire: 0.1
-    void: 0.1
-    explosion: 0.1
-    suffocation: 0.1
-    starvation: 0.1
-    projectile: 0.1
-    freezing: 0.1
+    generic: 0.025
+    lava: 0.025
+    fall: 0.025
+    pvp: 0.025
+    drowning: 0.025
+    fire: 0.025
+    void: 0.025
+    explosion: 0.025
+    suffocation: 0.025
+    starvation: 0.025
+    projectile: 0.025
+    freezing: 0.025
   # Legacy fallback for older configs.
   # chance: 0.20
 
 # Per-category chances from 0.0 to 1.0.
 chat-snark:
   chances:
-    generic: 0.05
-    question: 0.1
-    excited: 0.6
-    greeting: 0.05
-    lag: 0.1
-    brag: 0.3
-    confusion: 0.05
-    spam: 0.3
-    celebration: 0.1
+    generic: 0.0125
+    question: 0.025
+    excited: 0.15
+    greeting: 0.0125
+    lag: 0.025
+    brag: 0.075
+    confusion: 0.0125
+    spam: 0.075
+    celebration: 0.025
   # Legacy fallback for older configs.
   # chance: 0.05

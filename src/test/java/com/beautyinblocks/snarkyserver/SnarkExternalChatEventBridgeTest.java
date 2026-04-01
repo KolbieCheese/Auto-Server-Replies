@@ -2,9 +2,14 @@ package com.beautyinblocks.snarkyserver;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
@@ -31,10 +36,11 @@ class SnarkExternalChatEventBridgeTest {
         Server server = mock(Server.class);
         SnarkService snarkService = mock(SnarkService.class);
         when(plugin.getServer()).thenReturn(server);
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> false, Logger.getLogger("test"));
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> toggle(false, false, ""), Logger.getLogger("test"));
         Player sender = mock(Player.class);
         UUID senderUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614170010");
         when(sender.getUniqueId()).thenReturn(senderUuid);
+        when(sender.getName()).thenReturn("Kolbie");
 
         bridge.handleEvent(output(), new ClanChatMessageEvent(sender, senderUuid, "Builders", "BLD", "hello clan", false, false, List.of(sender)));
 
@@ -53,10 +59,11 @@ class SnarkExternalChatEventBridgeTest {
         when(server.getPlayer(senderUuid)).thenReturn(sender);
         when(sender.isOnline()).thenReturn(true);
         when(sender.getUniqueId()).thenReturn(senderUuid);
+        when(sender.getName()).thenReturn("Kolbie");
         when(snarkService.shouldHandleChatAsync(eq("hello clan"), any(SnarkExternalChatContext.class))).thenReturn(true);
         when(snarkService.buildAutomaticChatReply(eq(sender), eq("hello clan"), any(SnarkExternalChatContext.class)))
                 .thenReturn(Component.text("[Server] reply"));
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> true, Logger.getLogger("test"));
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> toggle(true, false, ""), Logger.getLogger("test"));
 
         bridge.handleEvent(output(), new ClanChatMessageEvent(sender, senderUuid, "Builders", "BLD", "hello clan", true, false, List.of(sender)));
 
@@ -75,16 +82,38 @@ class SnarkExternalChatEventBridgeTest {
         JavaPlugin plugin = mock(JavaPlugin.class);
         Server server = mock(Server.class);
         SnarkService snarkService = mock(SnarkService.class);
+        mockDiscordSrv(server);
         when(plugin.getServer()).thenReturn(server);
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> true, Logger.getLogger("test"));
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> toggle(true, true, "clan"), Logger.getLogger("test"));
         Player sender = mock(Player.class);
         UUID senderUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614170012");
         when(sender.getUniqueId()).thenReturn(senderUuid);
+        when(sender.getName()).thenReturn("Kolbie");
         ClanChatMessageEvent event = new ClanChatMessageEvent(sender, senderUuid, "Builders", "BLD", "hello clan", false, false, List.of(sender));
         event.setCancelled(true);
 
         bridge.handleEvent(output(), event);
 
+        verifyNoInteractions(snarkService);
+        verify(server).dispatchCommand(any(CommandSender.class), eq("discordsrv broadcast #clan [BLD] Kolbie: hello clan"));
+    }
+
+    @Test
+    void discordsrvRelayRunsWhenSnarkToggleIsOff() {
+        JavaPlugin plugin = mock(JavaPlugin.class);
+        Server server = mock(Server.class);
+        SnarkService snarkService = mock(SnarkService.class);
+        mockDiscordSrv(server);
+        when(plugin.getServer()).thenReturn(server);
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> toggle(false, true, "clan"), Logger.getLogger("test"));
+        Player sender = mock(Player.class);
+        UUID senderUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614170014");
+        when(sender.getUniqueId()).thenReturn(senderUuid);
+        when(sender.getName()).thenReturn("Kolbie");
+
+        bridge.handleEvent(output(), new ClanChatMessageEvent(sender, senderUuid, "Builders", "BLD", "hello clan", false, false, List.of(sender)));
+
+        verify(server).dispatchCommand(any(CommandSender.class), eq("discordsrv broadcast #clan [BLD] Kolbie: hello clan"));
         verifyNoInteractions(snarkService);
     }
 
@@ -102,6 +131,7 @@ class SnarkExternalChatEventBridgeTest {
         when(server.getPlayer(senderUuid)).thenReturn(sender);
         when(sender.isOnline()).thenReturn(true);
         when(sender.getUniqueId()).thenReturn(senderUuid);
+        when(sender.getName()).thenReturn("Kolbie");
         when(snarkService.shouldHandleChatAsync(eq("hello clan"), any(SnarkExternalChatContext.class))).thenReturn(true);
         when(snarkService.buildAutomaticChatReply(eq(sender), eq("hello clan"), any(SnarkExternalChatContext.class)))
                 .thenReturn(Component.text("[Server] reply"));
@@ -110,7 +140,7 @@ class SnarkExternalChatEventBridgeTest {
             runnable.run();
             return task;
         });
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> true, Logger.getLogger("test"));
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(plugin, snarkService, outputId -> toggle(true, false, ""), Logger.getLogger("test"));
 
         bridge.handleEvent(output(), new ClanChatMessageEvent(sender, senderUuid, "Builders", "BLD", "hello clan", false, true, List.of(sender)));
 
@@ -127,6 +157,30 @@ class SnarkExternalChatEventBridgeTest {
                 "chat",
                 "Clan chat messages from Lightweight Clans"
         );
+    }
+
+    private SnarkTriggersConfig.ExternalOutputToggle toggle(boolean enabled, boolean discordsrvEnabled, String discordsrvChannel) {
+        return new SnarkTriggersConfig.ExternalOutputToggle(
+                enabled,
+                "Lightweight Clans - Clan Chat",
+                "LightweightClans",
+                "chat",
+                ClanChatMessageEvent.class.getName(),
+                "Clan chat messages from Lightweight Clans",
+                new SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding(discordsrvEnabled, discordsrvChannel)
+        );
+    }
+
+    private void mockDiscordSrv(Server server) {
+        PluginManager pluginManager = mock(PluginManager.class);
+        Plugin discordSrv = mock(Plugin.class);
+        PluginCommand pluginCommand = mock(PluginCommand.class);
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+        when(server.getPluginManager()).thenReturn(pluginManager);
+        when(pluginManager.getPlugin("DiscordSRV")).thenReturn(discordSrv);
+        when(discordSrv.isEnabled()).thenReturn(true);
+        when(server.getPluginCommand("discordsrv")).thenReturn(pluginCommand);
+        when(server.getConsoleSender()).thenReturn(consoleSender);
     }
 
     public static final class ClanChatMessageEvent extends Event implements org.bukkit.event.Cancellable {

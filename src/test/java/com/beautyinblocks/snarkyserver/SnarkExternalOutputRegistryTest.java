@@ -62,7 +62,13 @@ class SnarkExternalOutputRegistryTest {
         assertEquals(1, registry.listOutputs().size());
         assertFalse(registry.isOutputEnabled("lightweightclans:clan_chat"));
         assertTrue(registry.hasActiveListener("lightweightclans:clan_chat"));
+        assertTrue(registry.getToggle("lightweightclans:clan_chat").discordsrv().enabled());
+        assertEquals("clan", registry.getToggle("lightweightclans:clan_chat").discordsrv().channel());
         assertTrue(handler.messages().isEmpty());
+
+        YamlConfiguration savedConfiguration = YamlConfiguration.loadConfiguration(tempDir.resolve("triggers.yml").toFile());
+        assertTrue(savedConfiguration.getBoolean("external-outputs.lightweightclans:clan_chat.discordsrv.enabled"));
+        assertEquals("clan", savedConfiguration.getString("external-outputs.lightweightclans:clan_chat.discordsrv.channel"));
     }
 
     @Test
@@ -153,7 +159,7 @@ class SnarkExternalOutputRegistryTest {
     private SnarkExternalOutputRegistry registry(JavaPlugin owner, Logger logger) {
         YamlConfiguration configuration = new YamlConfiguration();
         SnarkService snarkService = mock(SnarkService.class);
-        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(owner, snarkService, outputId -> true, logger);
+        SnarkExternalChatEventBridge bridge = new SnarkExternalChatEventBridge(owner, snarkService, outputId -> null, logger);
         return new SnarkExternalOutputRegistry(
                 owner,
                 configuration,

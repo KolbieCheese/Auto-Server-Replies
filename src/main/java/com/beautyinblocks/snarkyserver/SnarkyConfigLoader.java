@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class SnarkyConfigLoader {
-    private static final double DEFAULT_DEATH_CHANCE = 0.20D;
-    private static final double DEFAULT_CHAT_CHANCE = 0.05D;
+    private static final double DEFAULT_DEATH_CHANCE = 0.025D;
+    private static final double DEFAULT_CHAT_CHANCE = 0.0125D;
     private static final String MESSAGE_ROOT_PATH = "messages";
     private static final String DEATH_CHANCES_ROOT_PATH = "death-snark.chances";
     private static final String CHAT_CHANCES_ROOT_PATH = "chat-snark.chances";
@@ -223,7 +223,11 @@ public final class SnarkyConfigLoader {
                     configuration.getString(basePath + ".source-plugin", ""),
                     configuration.getString(basePath + ".kind", ""),
                     configuration.getString(basePath + ".event-class", ""),
-                    configuration.getString(basePath + ".description", "")
+                    configuration.getString(basePath + ".description", ""),
+                    new SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding(
+                            configuration.getBoolean(basePath + ".discordsrv.enabled", false),
+                            configuration.getString(basePath + ".discordsrv.channel", "")
+                    )
             ));
         }
 

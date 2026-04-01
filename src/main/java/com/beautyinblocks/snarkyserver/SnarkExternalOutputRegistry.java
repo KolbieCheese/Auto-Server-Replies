@@ -95,6 +95,10 @@ public class SnarkExternalOutputRegistry {
         return toggle != null && toggle.enabled();
     }
 
+    public SnarkTriggersConfig.ExternalOutputToggle getToggle(String outputId) {
+        return toggles.get(outputId);
+    }
+
     public List<OutputStatus> listOutputs() {
         List<OutputStatus> statuses = new ArrayList<>();
         for (RegisteredOutput registeredOutput : registeredOutputs.values()) {
@@ -177,13 +181,17 @@ public class SnarkExternalOutputRegistry {
     private void persistToggle(SnarkExternalOutput output) {
         SnarkTriggersConfig.ExternalOutputToggle currentToggle = toggles.get(output.id());
         boolean enabled = currentToggle != null && currentToggle.enabled();
+        SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding discordsrv = currentToggle != null
+                ? currentToggle.discordsrv()
+                : defaultDiscordSrvForwarding(output);
         SnarkTriggersConfig.ExternalOutputToggle updatedToggle = new SnarkTriggersConfig.ExternalOutputToggle(
                 enabled,
                 output.displayName(),
                 output.sourcePlugin(),
                 output.kind(),
                 output.eventClass(),
-                output.description()
+                output.description(),
+                discordsrv
         );
         toggles.put(output.id(), updatedToggle);
 
@@ -195,6 +203,8 @@ public class SnarkExternalOutputRegistry {
         changed |= setIfChanged(path + ".kind", updatedToggle.kind());
         changed |= setIfChanged(path + ".event-class", updatedToggle.eventClass());
         changed |= setIfChanged(path + ".description", updatedToggle.description());
+        changed |= setIfChanged(path + ".discordsrv.enabled", updatedToggle.discordsrv().enabled());
+        changed |= setIfChanged(path + ".discordsrv.channel", updatedToggle.discordsrv().channel());
 
         if (!changed) {
             return;
@@ -216,6 +226,13 @@ public class SnarkExternalOutputRegistry {
 
         triggersConfiguration.set(path, value);
         return true;
+    }
+
+    private SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding defaultDiscordSrvForwarding(SnarkExternalOutput output) {
+        if ("lightweightclans:clan_chat".equalsIgnoreCase(output.id())) {
+            return new SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding(true, "clan");
+        }
+        return SnarkTriggersConfig.ExternalOutputToggle.DiscordSrvForwarding.disabled();
     }
 
     public record OutputStatus(

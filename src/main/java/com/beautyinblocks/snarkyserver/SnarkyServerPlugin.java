@@ -10,8 +10,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Level;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
     private static final String MESSAGES_FILE = "messages.yml";
@@ -25,22 +25,12 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        SnarkyConfigMigrator configMigrator = new SnarkyConfigMigrator(getLogger());
-        configMigrator.migrateLegacyDataFolderIfNeeded(getDataFolder().toPath());
-        boolean needsLegacyCombinedConfigMigration = configMigrator.needsLegacyCombinedConfigMigration(getDataFolder().toPath());
-        bootstrapConfigResources();
         try {
-            if (needsLegacyCombinedConfigMigration) {
-                configMigrator.migrateLegacyCombinedConfig(getDataFolder().toPath());
-            }
-            configMigrator.ensureSplitConfigSchemaVersion(getDataFolder().toPath());
-        } catch (IOException | InvalidConfigurationException exception) {
-            getLogger().log(Level.SEVERE, "Failed to migrate Snarky Server configuration files.", exception);
+            reloadPluginState();
+        } catch (IllegalStateException exception) {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-
-        reloadPluginState();
 
         PluginCommand reloadCommand = getCommand("snarkreload");
         if (reloadCommand != null) {
@@ -83,8 +73,13 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         try {
             loadedConfigurations = loadConfigurationsFromDisk();
         } catch (IOException | InvalidConfigurationException exception) {
-            getLogger().severe("Failed to reload Snarky Server configuration files (messages.yml, chances.yml, triggers.yml)."
-                    + " Keeping previous in-memory configuration. " + exception.getMessage());
+            String failureMessage = "Failed to reload Snarky Server configuration files (messages.yml, chances.yml, triggers.yml).";
+            if (snarkService != null) {
+                failureMessage += " Keeping previous in-memory configuration.";
+            } else {
+                failureMessage += " Plugin startup cannot continue.";
+            }
+            getLogger().severe(failureMessage + " " + exception.getMessage());
             throw new IllegalStateException("Snarky Server configuration reload failed.", exception);
         }
 
@@ -97,6 +92,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
     }
 
     private LoadedConfigurations loadConfigurationsFromDisk() throws IOException, InvalidConfigurationException {
+        prepareConfigFiles();
         YamlConfiguration messagesConfiguration = loadConfigFile(MESSAGES_FILE);
         YamlConfiguration chancesConfiguration = loadConfigFile(CHANCES_FILE);
         YamlConfiguration triggersConfiguration = loadConfigFile(TRIGGERS_FILE);
@@ -140,7 +136,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         SnarkExternalChatEventBridge chatEventBridge = new SnarkExternalChatEventBridge(
                 this,
                 snarkService,
-                outputId -> externalOutputRegistry != null && externalOutputRegistry.isOutputEnabled(outputId),
+                outputId -> externalOutputRegistry == null ? null : externalOutputRegistry.getToggle(outputId),
                 getLogger()
         );
         externalOutputRegistry = new SnarkExternalOutputRegistry(
@@ -164,14 +160,25 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         externalOutputRegistry.discoverLoadedPlugins();
     }
 
-    private void bootstrapConfigResources() {
-        if (!getDataFolder().exists() && !getDataFolder().mkdirs()) {
-            getLogger().warning("Could not create plugin data directory at " + getDataFolder().getAbsolutePath());
+    private void prepareConfigFiles() throws IOException, InvalidConfigurationException {
+        SnarkyConfigBootstrapper bootstrapper = new SnarkyConfigBootstrapper(
+                new SnarkyConfigMigrator(getLogger()),
+                this::writeMissingBundledResource,
+                getLogger()
+        );
+        bootstrapper.prepareDataFolder(getDataFolder().toPath());
+    }
+
+    private void writeMissingBundledResource(String resourceName, Path targetPath) throws IOException {
+        if (targetPath.toFile().isFile()) {
+            return;
         }
 
-        saveResource(MESSAGES_FILE, false);
-        saveResource(CHANCES_FILE, false);
-        saveResource(TRIGGERS_FILE, false);
+        try {
+            saveResource(resourceName, false);
+        } catch (IllegalArgumentException exception) {
+            throw new IOException("Missing bundled resource: " + resourceName, exception);
+        }
     }
 
     private void logMissingGenericMessageWarnings(SnarkyConfig config) {
