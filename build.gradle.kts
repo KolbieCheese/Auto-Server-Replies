@@ -63,7 +63,7 @@ java {
 }
 
 tasks.jar {
-    archiveFileName.set("Snarky Server ${project.version}.jar")
+    archiveFileName.set("SnarkyServer-${project.version}.jar")
 }
 
 tasks.processResources {

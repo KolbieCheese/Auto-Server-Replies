@@ -76,8 +76,8 @@ jobs:
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Snarky Server ${{ steps.version.outputs.plugin_version }}
-          path: "build/libs/Snarky Server ${{ steps.version.outputs.plugin_version }}.jar"
+          name: SnarkyServer-${{ steps.version.outputs.plugin_version }}
+          path: "build/libs/SnarkyServer-${{ steps.version.outputs.plugin_version }}.jar"
           if-no-files-found: error
 
   release:
@@ -92,7 +92,7 @@ jobs:
       - name: Download built jar
         uses: actions/download-artifact@v4
         with:
-          name: Snarky Server ${{ needs.build.outputs.plugin_version }}
+          name: SnarkyServer-${{ needs.build.outputs.plugin_version }}
           path: release-assets
 
       - name: Publish GitHub release
@@ -103,6 +103,6 @@ jobs:
           name: Snarky Server ${{ needs.build.outputs.plugin_version }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: "release-assets/Snarky Server ${{ needs.build.outputs.plugin_version }}.jar"
+          files: "release-assets/SnarkyServer-${{ needs.build.outputs.plugin_version }}.jar"
           fail_on_unmatched_files: true
           overwrite_files: true

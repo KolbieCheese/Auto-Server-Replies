@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
@@ -114,6 +115,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         HandlerList.unregisterAll(this);
 
         logMissingGenericMessageWarnings(config);
+        logConfigurationSummary(config);
         cooldownManager = new CooldownManager(config.triggersConfig().cooldowns());
         chatBurstTracker = new ChatBurstTracker();
         SnarkFormatter formatter = new SnarkFormatter(config.prefix());
@@ -158,6 +160,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 this
         );
         externalOutputRegistry.discoverLoadedPlugins();
+        logExternalOutputSummary();
     }
 
     private void prepareConfigFiles() throws IOException, InvalidConfigurationException {
@@ -188,6 +191,98 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         if (config.messagesConfig().chatMessagesFor(ChatCategory.GENERIC).isEmpty()) {
             getLogger().warning("messages.chat-generic is empty; automatic chat replies without category-specific entries will be skipped.");
         }
+    }
+
+    private void logConfigurationSummary(SnarkyConfig config) {
+        SnarkTriggersConfig triggersConfig = config.triggersConfig();
+        getLogger().info("Snarky config: global=" + stateLabel(triggersConfig.enabled())
+                + ", death=" + stateLabel(triggersConfig.deathSnark().enabled())
+                + " (generic chance " + formatChance(config.chancesConfig().deathChanceFor(DeathCategory.GENERIC))
+                + ", generic pool " + config.messagesConfig().deathMessagesFor(DeathCategory.GENERIC).size() + ")"
+                + ", chat=" + stateLabel(triggersConfig.chatSnark().enabled())
+                + " (generic chance " + formatChance(config.chancesConfig().chatChanceFor(ChatCategory.GENERIC))
+                + ", generic pool " + config.messagesConfig().chatMessagesFor(ChatCategory.GENERIC).size()
+                + ", min length " + triggersConfig.chatSnark().minMessageLength()
+                + ", ignore commands " + yesNo(triggersConfig.chatSnark().ignoreCommands()) + ")");
+        getLogger().info("Snarky filters: bypass permission=" + valueOrNone(triggersConfig.filters().bypassPermission())
+                + ", ignored worlds=" + formatList(triggersConfig.filters().ignoredWorlds())
+                + ", ignored prefixes=" + formatList(triggersConfig.filters().ignoredPrefixes())
+                + ", cooldowns=global " + triggersConfig.cooldowns().globalSeconds()
+                + "s / per-player " + triggersConfig.cooldowns().perPlayerSeconds() + "s");
+
+        if (!triggersConfig.enabled()) {
+            getLogger().warning("Snarky Server automatic replies are globally disabled in triggers.yml.");
+        }
+        if (!triggersConfig.deathSnark().enabled()) {
+            getLogger().warning("Death snark is disabled in triggers.yml.");
+        }
+        if (!triggersConfig.chatSnark().enabled()) {
+            getLogger().warning("Chat snark is disabled in triggers.yml.");
+        }
+        if (allDeathChancesDisabled(config)) {
+            getLogger().warning("All death reply chances are set to 0%; automatic death replies will never trigger.");
+        }
+        if (allChatChancesDisabled(config)) {
+            getLogger().warning("All chat reply chances are set to 0%; automatic chat replies will never trigger.");
+        }
+        if (config.chancesConfig().deathChanceFor(DeathCategory.GENERIC) <= 0.05D
+                || config.chancesConfig().chatChanceFor(ChatCategory.GENERIC) <= 0.02D) {
+            getLogger().info("Snarky Server is configured with low default reply chances; quiet stretches are expected unless chances.yml is increased.");
+        }
+    }
+
+    private void logExternalOutputSummary() {
+        if (externalOutputRegistry == null) {
+            return;
+        }
+
+        List<SnarkExternalOutputRegistry.OutputStatus> outputs = externalOutputRegistry.listOutputs();
+        long enabledCount = outputs.stream().filter(SnarkExternalOutputRegistry.OutputStatus::enabled).count();
+        long activeCount = outputs.stream().filter(SnarkExternalOutputRegistry.OutputStatus::active).count();
+        getLogger().info("Snarky external outputs: discovered=" + outputs.size()
+                + ", enabled=" + enabledCount
+                + ", active listeners=" + activeCount + ".");
+    }
+
+    private boolean allDeathChancesDisabled(SnarkyConfig config) {
+        for (DeathCategory category : DeathCategory.values()) {
+            if (config.chancesConfig().deathChanceFor(category) > 0.0D) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean allChatChancesDisabled(SnarkyConfig config) {
+        for (ChatCategory category : ChatCategory.values()) {
+            if (config.chancesConfig().chatChanceFor(category) > 0.0D) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String formatChance(double chance) {
+        return String.format(java.util.Locale.US, "%.2f%%", Math.max(0.0D, Math.min(1.0D, chance)) * 100.0D);
+    }
+
+    private String formatList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "none";
+        }
+        return String.join(", ", values);
+    }
+
+    private String valueOrNone(String value) {
+        return value == null || value.isBlank() ? "none" : value;
+    }
+
+    private String yesNo(boolean value) {
+        return value ? "yes" : "no";
+    }
+
+    private String stateLabel(boolean enabled) {
+        return enabled ? "enabled" : "disabled";
     }
 
     public CooldownManager getCooldownManager() {

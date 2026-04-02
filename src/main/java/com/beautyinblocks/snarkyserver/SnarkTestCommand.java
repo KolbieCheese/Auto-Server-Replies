@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> ROOT_SUBCOMMANDS = List.of("list", "death", "chat", "random", "cooldowns");
+    private static final List<String> ROOT_SUBCOMMANDS = List.of("list", "status", "death", "chat", "random", "cooldowns");
 
     private final Server server;
     private final Supplier<SnarkService> snarkServiceSupplier;
@@ -54,6 +54,7 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
         String subcommand = args[0].toLowerCase(Locale.ROOT);
         return switch (subcommand) {
             case "list" -> handleList(sender);
+            case "status" -> handleStatus(sender, args);
             case "death" -> handleDeath(sender, label, args);
             case "chat" -> handleChat(sender, label, args);
             case "random" -> handleRandom(sender, label, args);
@@ -80,7 +81,7 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
             return switch (subcommand) {
                 case "death" -> filterByPrefix(categoryKeys(DeathCategory.values()), args[1]);
                 case "chat" -> filterByPrefix(categoryKeys(ChatCategory.values()), args[1]);
-                case "random", "cooldowns" -> filterByPrefix(onlinePlayerNames(), args[1]);
+                case "random", "cooldowns", "status" -> filterByPrefix(onlinePlayerNames(), args[1]);
                 default -> List.of();
             };
         }
@@ -116,6 +117,67 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
         for (SnarkExternalOutputRegistry.OutputStatus output : externalOutputs) {
             sender.sendMessage(ChatColor.YELLOW + " - " + output.id() + " (" + output.displayName()
                     + " from " + output.sourcePlugin() + "): " + stateLabel(output.enabled()));
+        }
+        return true;
+    }
+
+    private boolean handleStatus(CommandSender sender, String[] args) {
+        SnarkService snarkService = snarkServiceSupplier.get();
+        CooldownManager cooldownManager = cooldownManagerSupplier.get();
+        SnarkyConfig config = snarkService.config();
+        SnarkTriggersConfig triggersConfig = config.triggersConfig();
+        Instant now = Instant.now();
+
+        sender.sendMessage(ChatColor.YELLOW + "Snarky Server status:");
+        sender.sendMessage(ChatColor.YELLOW + " - global: " + stateLabel(triggersConfig.enabled()));
+        sender.sendMessage(ChatColor.YELLOW + " - death-snark: " + stateLabel(triggersConfig.deathSnark().enabled())
+                + " | generic chance " + formatChance(config.chancesConfig().deathChanceFor(DeathCategory.GENERIC))
+                + " | generic pool " + config.messagesConfig().deathMessagesFor(DeathCategory.GENERIC).size());
+        sender.sendMessage(ChatColor.YELLOW + " - chat-snark: " + stateLabel(triggersConfig.chatSnark().enabled())
+                + " | generic chance " + formatChance(config.chancesConfig().chatChanceFor(ChatCategory.GENERIC))
+                + " | generic pool " + config.messagesConfig().chatMessagesFor(ChatCategory.GENERIC).size()
+                + " | min length " + triggersConfig.chatSnark().minMessageLength()
+                + " | ignore commands " + yesNo(triggersConfig.chatSnark().ignoreCommands()));
+        sender.sendMessage(ChatColor.YELLOW + " - cooldowns: global "
+                + triggersConfig.cooldowns().globalSeconds() + "s, per-player "
+                + triggersConfig.cooldowns().perPlayerSeconds() + "s, current global "
+                + formatDuration(cooldownManager.remainingGlobal(now)));
+        sender.sendMessage(ChatColor.YELLOW + " - filters: bypass permission "
+                + valueOrNone(triggersConfig.filters().bypassPermission())
+                + ", ignored worlds " + formatList(triggersConfig.filters().ignoredWorlds())
+                + ", ignored prefixes " + formatList(triggersConfig.filters().ignoredPrefixes()));
+
+        SnarkExternalOutputRegistry externalOutputRegistry = externalOutputRegistrySupplier.get();
+        List<SnarkExternalOutputRegistry.OutputStatus> externalOutputs = externalOutputRegistry == null
+                ? List.of()
+                : externalOutputRegistry.listOutputs();
+        long enabledOutputs = externalOutputs.stream().filter(SnarkExternalOutputRegistry.OutputStatus::enabled).count();
+        long activeOutputs = externalOutputs.stream().filter(SnarkExternalOutputRegistry.OutputStatus::active).count();
+        sender.sendMessage(ChatColor.YELLOW + " - external outputs: "
+                + externalOutputs.size() + " discovered, "
+                + enabledOutputs + " enabled, "
+                + activeOutputs + " active listeners");
+
+        Player inspectedPlayer = resolveInspectedPlayer(sender, args);
+        if (args.length >= 2 && inspectedPlayer == null) {
+            sender.sendMessage(ChatColor.RED + "Player '" + args[1] + "' is not online, so player-specific status could not be checked.");
+        }
+        if (inspectedPlayer != null) {
+            boolean bypassed = !triggersConfig.filters().bypassPermission().isBlank()
+                    && inspectedPlayer.hasPermission(triggersConfig.filters().bypassPermission());
+            boolean ignoredWorld = triggersConfig.filters().ignoredWorlds().stream()
+                    .anyMatch(world -> world.equalsIgnoreCase(inspectedPlayer.getWorld().getName()));
+            sender.sendMessage(ChatColor.YELLOW + " - player check (" + inspectedPlayer.getName() + "): world "
+                    + inspectedPlayer.getWorld().getName()
+                    + ", bypass permission " + yesNo(bypassed)
+                    + ", ignored world " + yesNo(ignoredWorld)
+                    + ", personal cooldown "
+                    + formatDuration(cooldownManager.remainingForPlayer(inspectedPlayer.getUniqueId(), now)));
+        }
+
+        if (config.chancesConfig().deathChanceFor(DeathCategory.GENERIC) <= 0.05D
+                || config.chancesConfig().chatChanceFor(ChatCategory.GENERIC) <= 0.02D) {
+            sender.sendMessage(ChatColor.GRAY + "Low default chances are configured. Quiet stretches are expected; use /snarktest chat|death to force a preview.");
         }
         return true;
     }
@@ -197,6 +259,7 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
     private void sendUsage(CommandSender sender, String label) {
         sender.sendMessage(ChatColor.YELLOW + "Usage:");
         sender.sendMessage(ChatColor.YELLOW + "/" + label + " list");
+        sender.sendMessage(ChatColor.YELLOW + "/" + label + " status [player]");
         sender.sendMessage(ChatColor.YELLOW + "/" + label + " death <category> <player> [killer]");
         sender.sendMessage(ChatColor.YELLOW + "/" + label + " chat <category> <player> [message...]");
         sender.sendMessage(ChatColor.YELLOW + "/" + label + " random <player>");
@@ -236,6 +299,35 @@ public final class SnarkTestCommand implements CommandExecutor, TabCompleter {
 
         long seconds = Math.max(1L, duration.toSeconds());
         return seconds + "s remaining";
+    }
+
+    private String formatChance(double chance) {
+        return String.format(Locale.US, "%.2f%%", Math.max(0.0D, Math.min(1.0D, chance)) * 100.0D);
+    }
+
+    private String formatList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "none";
+        }
+        return String.join(", ", values);
+    }
+
+    private String valueOrNone(String value) {
+        return value == null || value.isBlank() ? "none" : value;
+    }
+
+    private String yesNo(boolean value) {
+        return value ? "yes" : "no";
+    }
+
+    private Player resolveInspectedPlayer(CommandSender sender, String[] args) {
+        if (args.length >= 2) {
+            return server.getPlayerExact(args[1]);
+        }
+        if (sender instanceof Player player) {
+            return player;
+        }
+        return null;
     }
 
     private String stateLabel(boolean enabled) {
