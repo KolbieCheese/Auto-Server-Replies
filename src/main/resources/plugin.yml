@@ -13,7 +13,7 @@ commands:
     permission: snarkyserver.reload
   snarktest:
     description: Force Snarky Server test replies and inspect categories or cooldowns.
-    usage: /<command> <list|death|chat|random|cooldowns>
+    usage: /<command> <list|status|death|chat|random|cooldowns>
     permission: snarkyserver.test
 permissions:
   snarkyserver.bypass:

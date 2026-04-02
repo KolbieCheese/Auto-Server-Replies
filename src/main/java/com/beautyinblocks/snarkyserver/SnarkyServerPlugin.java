@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class SnarkyServerPlugin extends JavaPlugin {
@@ -26,11 +27,23 @@ public final class SnarkyServerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        boolean startedWithBundledDefaults = false;
         try {
             reloadPluginState();
         } catch (IllegalStateException exception) {
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+            getLogger().log(Level.SEVERE,
+                    "Snarky Server failed to load its live configuration during startup. Attempting bundled defaults so admin commands can still be used.",
+                    exception);
+            try {
+                loadBundledPluginState();
+                startedWithBundledDefaults = true;
+            } catch (IllegalStateException fallbackException) {
+                getLogger().log(Level.SEVERE,
+                        "Snarky Server could not start even with bundled defaults. Disabling plugin.",
+                        fallbackException);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
         }
 
         PluginCommand reloadCommand = getCommand("snarkreload");
@@ -54,6 +67,9 @@ public final class SnarkyServerPlugin extends JavaPlugin {
             getLogger().warning("Command 'snarktest' was not found in plugin.yml; test command is unavailable.");
         }
 
+        if (startedWithBundledDefaults) {
+            getLogger().warning("Snarky Server started with bundled defaults because the live config could not be loaded. Fix the config files on disk and run /snarkreload.");
+        }
         getLogger().info("Snarky Server enabled.");
     }
 
@@ -89,7 +105,23 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 loadedConfigurations.chances(),
                 loadedConfigurations.triggers()
         );
-        initializeServices(config, loadedConfigurations.triggers());
+        initializeServices(config, loadedConfigurations.triggers(), true);
+    }
+
+    private void loadBundledPluginState() {
+        LoadedConfigurations loadedConfigurations;
+        try {
+            loadedConfigurations = loadBundledConfigurations();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Snarky Server bundled defaults could not be loaded.", exception);
+        }
+
+        SnarkyConfig config = SnarkyConfigLoader.load(
+                loadedConfigurations.messages(),
+                loadedConfigurations.chances(),
+                loadedConfigurations.triggers()
+        );
+        initializeServices(config, loadedConfigurations.triggers(), false);
     }
 
     private LoadedConfigurations loadConfigurationsFromDisk() throws IOException, InvalidConfigurationException {
@@ -97,6 +129,13 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         YamlConfiguration messagesConfiguration = loadConfigFile(MESSAGES_FILE);
         YamlConfiguration chancesConfiguration = loadConfigFile(CHANCES_FILE);
         YamlConfiguration triggersConfiguration = loadConfigFile(TRIGGERS_FILE);
+        return new LoadedConfigurations(messagesConfiguration, chancesConfiguration, triggersConfiguration);
+    }
+
+    private LoadedConfigurations loadBundledConfigurations() throws IOException {
+        YamlConfiguration messagesConfiguration = loadBundledConfigFile(MESSAGES_FILE);
+        YamlConfiguration chancesConfiguration = loadBundledConfigFile(CHANCES_FILE);
+        YamlConfiguration triggersConfiguration = loadBundledConfigFile(TRIGGERS_FILE);
         return new LoadedConfigurations(messagesConfiguration, chancesConfiguration, triggersConfiguration);
     }
 
@@ -111,7 +150,21 @@ public final class SnarkyServerPlugin extends JavaPlugin {
         return configuration;
     }
 
-    private void initializeServices(SnarkyConfig config, YamlConfiguration triggersConfiguration) {
+    private YamlConfiguration loadBundledConfigFile(String fileName) throws IOException {
+        try (Reader reader = getTextResource(fileName)) {
+            if (reader == null) {
+                throw new IOException("Missing bundled resource: " + fileName);
+            }
+
+            return YamlConfiguration.loadConfiguration(reader);
+        }
+    }
+
+    private void initializeServices(
+            SnarkyConfig config,
+            YamlConfiguration triggersConfiguration,
+            boolean persistExternalOutputChanges
+    ) {
         HandlerList.unregisterAll(this);
 
         logMissingGenericMessageWarnings(config);
@@ -145,6 +198,7 @@ public final class SnarkyServerPlugin extends JavaPlugin {
                 this,
                 triggersConfiguration,
                 new File(getDataFolder(), TRIGGERS_FILE),
+                persistExternalOutputChanges,
                 config.triggersConfig(),
                 manifestLoader,
                 chatEventBridge,

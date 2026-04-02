@@ -15,6 +15,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
@@ -156,6 +157,35 @@ class SnarkExternalOutputRegistryTest {
         assertTrue(handler.messages().stream().anyMatch(message -> message.contains("could not load event class")));
     }
 
+    @Test
+    void fallbackModeKeepsDiscoveredOutputsInMemoryWithoutOverwritingDiskConfig() throws Exception {
+        Logger logger = testLogger(new CollectingHandler());
+        PluginManager pluginManager = mock(PluginManager.class);
+        Server server = mock(Server.class);
+        JavaPlugin owner = ownerPlugin(server, logger);
+        Plugin externalPlugin = manifestPlugin("LightweightClans", validManifest(eventClassName()));
+        YamlConfiguration configuration = new YamlConfiguration();
+        Path triggersPath = tempDir.resolve("triggers.yml");
+        Files.writeString(triggersPath, "external-outputs:\n  preserved: true\n");
+        when(server.getPluginManager()).thenReturn(pluginManager);
+
+        SnarkExternalOutputRegistry registry = new SnarkExternalOutputRegistry(
+                owner,
+                configuration,
+                triggersPath.toFile(),
+                false,
+                TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D).triggersConfig(),
+                new SnarkExternalOutputManifestLoader(logger),
+                new SnarkExternalChatEventBridge(owner, mock(SnarkService.class), outputId -> null, logger),
+                logger
+        );
+
+        registry.discoverPlugin(externalPlugin);
+
+        assertEquals(1, registry.listOutputs().size());
+        assertTrue(Files.readString(triggersPath).contains("preserved: true"));
+    }
+
     private SnarkExternalOutputRegistry registry(JavaPlugin owner, Logger logger) {
         YamlConfiguration configuration = new YamlConfiguration();
         SnarkService snarkService = mock(SnarkService.class);
@@ -164,6 +194,7 @@ class SnarkExternalOutputRegistryTest {
                 owner,
                 configuration,
                 tempDir.resolve("triggers.yml").toFile(),
+                true,
                 TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D).triggersConfig(),
                 new SnarkExternalOutputManifestLoader(logger),
                 bridge,

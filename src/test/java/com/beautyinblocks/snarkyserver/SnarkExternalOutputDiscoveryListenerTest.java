@@ -50,6 +50,7 @@ class SnarkExternalOutputDiscoveryListenerTest {
                 owner,
                 new YamlConfiguration(),
                 tempDir.resolve("triggers.yml").toFile(),
+                true,
                 TestSnarkConfigs.simpleConfig(true, true, true, 60, 20, 1.0D, 1.0D).triggersConfig(),
                 new SnarkExternalOutputManifestLoader(logger),
                 bridge,

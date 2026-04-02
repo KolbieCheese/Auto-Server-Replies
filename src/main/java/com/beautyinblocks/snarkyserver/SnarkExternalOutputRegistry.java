@@ -26,6 +26,7 @@ public class SnarkExternalOutputRegistry {
     private final JavaPlugin plugin;
     private final YamlConfiguration triggersConfiguration;
     private final File triggersFile;
+    private final boolean persistToDisk;
     private final SnarkExternalOutputManifestLoader manifestLoader;
     private final SnarkExternalChatEventBridge chatEventBridge;
     private final Logger logger;
@@ -37,6 +38,7 @@ public class SnarkExternalOutputRegistry {
             JavaPlugin plugin,
             YamlConfiguration triggersConfiguration,
             File triggersFile,
+            boolean persistToDisk,
             SnarkTriggersConfig triggersConfig,
             SnarkExternalOutputManifestLoader manifestLoader,
             SnarkExternalChatEventBridge chatEventBridge,
@@ -45,6 +47,7 @@ public class SnarkExternalOutputRegistry {
         this.plugin = plugin;
         this.triggersConfiguration = triggersConfiguration;
         this.triggersFile = triggersFile;
+        this.persistToDisk = persistToDisk;
         this.manifestLoader = manifestLoader;
         this.chatEventBridge = chatEventBridge;
         this.logger = logger;
@@ -194,6 +197,10 @@ public class SnarkExternalOutputRegistry {
                 discordsrv
         );
         toggles.put(output.id(), updatedToggle);
+
+        if (!persistToDisk) {
+            return;
+        }
 
         String path = "external-outputs." + output.id();
         boolean changed = false;
