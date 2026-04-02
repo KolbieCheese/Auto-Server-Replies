@@ -19,7 +19,7 @@ class SnarkyConfigMigratorTest {
 
     @Test
     void migratesLegacyCombinedConfigIntoSplitFiles() throws Exception {
-        Path dataFolder = tempDir.resolve("Snarky Server");
+        Path dataFolder = tempDir.resolve("SnarkyServer");
         Files.createDirectories(dataFolder);
 
         writeFile(dataFolder.resolve("messages.yml"), """
@@ -124,10 +124,10 @@ class SnarkyConfigMigratorTest {
     }
 
     @Test
-    void migratesLegacySnarkyServerDataFolderOnFirstBoot() throws Exception {
+    void migratesLegacySpacedDataFolderOnFirstBoot() throws Exception {
         Path pluginsFolder = tempDir.resolve("plugins");
-        Path legacyDataFolder = pluginsFolder.resolve("SnarkyServer");
-        Path currentDataFolder = pluginsFolder.resolve("Snarky Server");
+        Path legacyDataFolder = pluginsFolder.resolve("Snarky Server");
+        Path currentDataFolder = pluginsFolder.resolve("SnarkyServer");
         Files.createDirectories(legacyDataFolder);
 
         writeFile(legacyDataFolder.resolve("messages.yml"), """
@@ -163,8 +163,8 @@ class SnarkyConfigMigratorTest {
     @Test
     void leavesLegacyFolderAloneWhenCurrentConfigAlreadyExistsWithSameSchema() throws Exception {
         Path pluginsFolder = tempDir.resolve("plugins");
-        Path legacyDataFolder = pluginsFolder.resolve("SnarkyServer");
-        Path currentDataFolder = pluginsFolder.resolve("Snarky Server");
+        Path legacyDataFolder = pluginsFolder.resolve("Snarky Server");
+        Path currentDataFolder = pluginsFolder.resolve("SnarkyServer");
         Files.createDirectories(legacyDataFolder);
         Files.createDirectories(currentDataFolder);
 
@@ -189,7 +189,7 @@ class SnarkyConfigMigratorTest {
 
     @Test
     void stampsSplitConfigSchemaVersionWithoutChangingExistingValues() throws Exception {
-        Path dataFolder = tempDir.resolve("Snarky Server");
+        Path dataFolder = tempDir.resolve("SnarkyServer");
         Files.createDirectories(dataFolder);
 
         writeFile(dataFolder.resolve("triggers.yml"), """

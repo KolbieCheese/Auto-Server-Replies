@@ -20,7 +20,7 @@ class SnarkyConfigBootstrapperTest {
 
     @Test
     void recreatesMissingSplitFilesAndMigratesLegacyConfig() throws Exception {
-        Path dataFolder = tempDir.resolve("Snarky Server");
+        Path dataFolder = tempDir.resolve("SnarkyServer");
         Files.createDirectories(dataFolder);
         writeFile(dataFolder.resolve("config.yml"), """
                 enabled: false
@@ -59,7 +59,7 @@ class SnarkyConfigBootstrapperTest {
 
     @Test
     void recreatesSplitFilesWithoutRecreatingDeprecatedLegacyConfig() throws Exception {
-        Path dataFolder = tempDir.resolve("Snarky Server");
+        Path dataFolder = tempDir.resolve("SnarkyServer");
 
         List<String> recreatedFiles = bootstrapper().prepareDataFolder(dataFolder);
 

@@ -21,7 +21,7 @@ Snarky Server now uses **three config files** in the plugin data folder:
 
 If you are upgrading from an older build:
 
-1. If the old plugin data folder is `plugins/SnarkyServer`, the renamed `Snarky Server` build will copy it into `plugins/Snarky Server` on first boot.
+1. If the old plugin data folder is `plugins/Snarky Server`, the current `SnarkyServer` build will copy it into `plugins/SnarkyServer` on first boot.
 2. If the old setup still uses a single `config.yml`, startup will split that file into `messages.yml`, `chances.yml`, and `triggers.yml` automatically.
 3. If the split-config schema has not changed, startup leaves the old legacy folder alone instead of deleting it.
 4. Local development builds default to `pluginBaseVersion-SNAPSHOT`, while GitHub Actions increments the numeric `major.minor.patch` version with rollover at 10 per digit.

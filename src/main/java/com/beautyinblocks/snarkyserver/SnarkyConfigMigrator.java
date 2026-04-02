@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 final class SnarkyConfigMigrator {
     static final int CONFIG_SCHEMA_VERSION = 1;
 
-    private static final String LEGACY_DATA_FOLDER_NAME = "SnarkyServer";
+    private static final String LEGACY_SPACED_DATA_FOLDER_NAME = "Snarky Server";
     private static final String LEGACY_CONFIG_FILE = "config.yml";
     private static final String MESSAGES_FILE = "messages.yml";
     private static final String CHANCES_FILE = "chances.yml";
@@ -41,7 +41,7 @@ final class SnarkyConfigMigrator {
             return;
         }
 
-        Path legacyDataFolder = parentFolder.resolve(LEGACY_DATA_FOLDER_NAME);
+        Path legacyDataFolder = parentFolder.resolve(LEGACY_SPACED_DATA_FOLDER_NAME);
         if (!Files.isDirectory(legacyDataFolder) || legacyDataFolder.equals(currentDataFolder)) {
             return;
         }
@@ -79,9 +79,9 @@ final class SnarkyConfigMigrator {
             }
 
             deleteDirectoryRecursively(legacyDataFolder);
-            logger.info("Migrated legacy SnarkyServer data folder into Snarky Server data folder.");
+            logger.info("Migrated legacy 'Snarky Server' data folder into 'SnarkyServer'.");
         } catch (IOException ioException) {
-            logger.log(Level.WARNING, "Failed to migrate legacy SnarkyServer data folder.", ioException);
+            logger.log(Level.WARNING, "Failed to migrate legacy 'Snarky Server' data folder.", ioException);
         }
     }
 

@@ -1,4 +1,4 @@
-name: Snarky Server
+name: SnarkyServer
 version: ${version}
 main: com.beautyinblocks.snarkyserver.SnarkyServerPlugin
 api-version: '1.21.11'
