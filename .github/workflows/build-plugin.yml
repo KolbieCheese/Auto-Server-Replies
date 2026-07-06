@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plugin_version: ${{ steps.version.outputs.plugin_version }}
+      paper_api_compatibility: ${{ steps.compatibility.outputs.paper_api_compatibility }}
     permissions:
       contents: read
 
@@ -40,12 +41,26 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Set up Java 21
+      - name: Set up Java 25
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: gradle
+
+      - name: Read Paper compatibility
+        id: compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          paper_api_compatibility="$(grep '^paperApiCompatibility=' gradle.properties | cut -d= -f2)"
+          if [[ -z "$paper_api_compatibility" ]]; then
+            echo "Missing paperApiCompatibility in gradle.properties." >&2
+            exit 1
+          fi
+
+          echo "paper_api_compatibility=${paper_api_compatibility}" >> "$GITHUB_OUTPUT"
 
       - name: Calculate plugin version
         id: version
@@ -76,7 +91,7 @@ jobs:
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SnarkyServer-${{ steps.version.outputs.plugin_version }}
+          name: SnarkyServer-${{ steps.version.outputs.plugin_version }}-Paper-${{ steps.compatibility.outputs.paper_api_compatibility }}
           path: "build/libs/SnarkyServer-${{ steps.version.outputs.plugin_version }}.jar"
           if-no-files-found: error
 
@@ -92,7 +107,7 @@ jobs:
       - name: Download built jar
         uses: actions/download-artifact@v4
         with:
-          name: SnarkyServer-${{ needs.build.outputs.plugin_version }}
+          name: SnarkyServer-${{ needs.build.outputs.plugin_version }}-Paper-${{ needs.build.outputs.paper_api_compatibility }}
           path: release-assets
 
       - name: Publish GitHub release
@@ -100,9 +115,11 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
           tag_name: v${{ needs.build.outputs.plugin_version }}
-          name: Snarky Server ${{ needs.build.outputs.plugin_version }}
+          name: Snarky Server ${{ needs.build.outputs.plugin_version }} (Paper ${{ needs.build.outputs.paper_api_compatibility }})
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
+          body: |
+            Compatibility: Paper ${{ needs.build.outputs.paper_api_compatibility }} on Java 25+.
           files: "release-assets/SnarkyServer-${{ needs.build.outputs.plugin_version }}.jar"
           fail_on_unmatched_files: true
           overwrite_files: true

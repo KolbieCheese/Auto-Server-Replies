@@ -9,6 +9,9 @@ import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
 group = "com.beautyinblocks"
 
 val pluginBaseVersion = providers.gradleProperty("pluginBaseVersion").get()
+val paperApiVersion = providers.gradleProperty("paperApiVersion").get()
+val paperApiCompatibility = providers.gradleProperty("paperApiCompatibility").get()
+val javaLanguageVersion = providers.gradleProperty("javaLanguageVersion").map { it.toInt() }.get()
 
 fun incrementVersion(versionString: String, buildNumber: Int): String {
     val parts = versionString.split(".")
@@ -49,8 +52,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:$paperApiVersion")
+    testImplementation("io.papermc.paper:paper-api:$paperApiVersion")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.mockito:mockito-core:5.20.0")
@@ -58,19 +61,30 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(javaLanguageVersion))
     }
 }
 
 tasks.jar {
     archiveFileName.set("SnarkyServer-${project.version}.jar")
+    manifest {
+        attributes(
+            "Implementation-Title" to "SnarkyServer",
+            "Implementation-Version" to project.version,
+            "Paper-Api-Version" to paperApiCompatibility
+        )
+    }
 }
 
 tasks.processResources {
     inputs.property("pluginVersion", project.version)
+    inputs.property("paperApiCompatibility", paperApiCompatibility)
 
     filesMatching("plugin.yml") {
-        expand("version" to project.version)
+        expand(
+            "version" to project.version,
+            "paperApiCompatibility" to paperApiCompatibility
+        )
     }
 }
 

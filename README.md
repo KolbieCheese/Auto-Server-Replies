@@ -1,9 +1,17 @@
 # Snarky Server
 
+Current compatibility:
+
+- Paper 26.2
+- Java 25+
+- Gradle resolves the newest Paper 26.2 API build with `paperApiVersion=26.2.build.+`
+
 Paper plugin builds from GitHub Actions are published in two places:
 
 - GitHub Releases on every default-branch build as `SnarkyServer-<version>.jar`
-- A matching `SnarkyServer-<version>` artifact on each workflow run in Actions
+- A matching `SnarkyServer-<version>-Paper-26.2` artifact on each workflow run in Actions
+
+The release title and release notes also include the Paper compatibility target, so the newest GitHub jar clearly shows which Paper line it was built for.
 
 GitHub's repository source downloads such as `Source code (zip)` and `Source code (tar.gz)` only contain the source files. They do not include the compiled plugin jar.
 
