@@ -41,11 +41,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Set up Java 25
+      - name: Set up Java 21 for Gradle
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '21'
           cache: gradle
 
       - name: Read Paper compatibility
@@ -85,6 +85,8 @@ jobs:
 
       # Build the Paper plugin jar on every push, pull request, and manual run.
       # Use bash explicitly so the build does not depend on gradlew file mode in git.
+      # Gradle runs on Java 21 here; build.gradle.kts provisions the Java 25 toolchain
+      # used to compile and test against Paper 26.2.
       - name: Build plugin
         run: bash ./gradlew --no-daemon --stacktrace clean build -PpluginVersion="${{ steps.version.outputs.plugin_version }}"
 

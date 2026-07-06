@@ -6,6 +6,8 @@ Current compatibility:
 - Java 25+
 - Gradle resolves the newest Paper 26.2 API build with `paperApiVersion=26.2.build.+`
 
+CI runs Gradle itself on Java 21 because Gradle 8.14.3 does not run cleanly on Java 25. The project still compiles and tests with the Java 25 toolchain configured in `gradle.properties`.
+
 Paper plugin builds from GitHub Actions are published in two places:
 
 - GitHub Releases on every default-branch build as `SnarkyServer-<version>.jar`
